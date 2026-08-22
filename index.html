@@ -686,7 +686,7 @@
 <script>
 /* Wird bei jeder Auslieferung hochgezählt - so lässt sich in den Einstellungen
    sofort sehen, ob die neueste Version wirklich geladen wurde. */
-const APP_VERSION = '2026.08.22-2';
+const APP_VERSION = '2026.08.22-3';
 
 /* ---------------- Icons ---------------- */
 const ICONS = {
@@ -766,6 +766,7 @@ const state = {
     memberName: '',
     code: '',
     members: [],
+    createdByMemberId: null,
   },
   lastSync: 0,   // Zeitstempel (ms) der letzten erfolgreichen Synchronisierung mit dem Haushalt
 };
@@ -3110,9 +3111,10 @@ function startPersonalization(){
    funktioniert immer sofort (Offline-First) - der Upload zur Datenbank läuft im
    Hintergrund und darf jederzeit fehlschlagen (kein Internet, Server down), ohne
    dass die App das merkt. Erst der nächste Sync holt es nach. */
-let householdSheetMode = 'start';   // 'start' | 'create' | 'join' | 'joined'
+let householdSheetMode = 'start';   // 'start' | 'create' | 'join' | 'joined' | 'confirmLeave' | 'confirmRemove'
 let householdSyncTimer = null;
 let householdBusy = false;
+let pendingRemoveMemberId = null;
 
 function maybeShowHouseholdSetup(){
   // Schon in einem Haushalt oder schon mal gefragt/übersprungen -> nicht nochmal zeigen.
@@ -3127,6 +3129,9 @@ function openHouseholdSheet(){
   householdSheetMode = state.household.id ? 'joined' : 'start';
   renderHouseholdSheet();
   document.getElementById('householdOverlay').classList.add('open');
+  // Bei jedem Öffnen kurz auffrischen, damit z.B. der Verwalter-Status und die
+  // Mitgliederliste (für "Entfernen") aktuell sind, nicht erst nach bis zu 10s.
+  if(state.household.id) syncFromDatabase();
 }
 
 function dismissHouseholdSetup(){
@@ -3146,6 +3151,9 @@ function renderHouseholdSheet(){
   const h = state.household;
 
   if(householdSheetMode === 'joined' && h.id){
+    // Verwalter = die Person, die den Haushalt gegründet hat (households.created_by_member_id).
+    // Nur sie darf andere Mitglieder entfernen; jede Person darf selbst gehen.
+    const isAdmin = Boolean(h.memberId && h.createdByMemberId && h.memberId === h.createdByMemberId);
     content.innerHTML = `
       <h2>Küche geteilt 🍽️</h2>
       <p class="subtle" style="margin:10px 0 16px;">Ihr seht denselben Bestand und dieselbe Einkaufsliste - automatisch aktuell auf allen Geräten (Abgleich etwa alle 10 Sekunden).</p>
@@ -3161,12 +3169,45 @@ function renderHouseholdSheet(){
       ${h.members.length ? `
       <div class="section-title">Mitglieder</div>
       <div class="card" style="margin-bottom:16px;">
-        ${h.members.map(m => `
+        ${h.members.map(m => {
+          const memberIsAdmin = Boolean(h.createdByMemberId && m.id === h.createdByMemberId);
+          const isSelf = m.id === h.memberId;
+          return `
           <div class="expiry-item">
-            <div class="info" style="flex:1"><strong style="font-size:13.5px;">${escapeHtml(m.name)}${m.id===h.memberId ? ' (du)' : ''}</strong></div>
-          </div>`).join('')}
+            <div class="info" style="flex:1">
+              <strong style="font-size:13.5px;">${escapeHtml(m.name)}${isSelf ? ' (du)' : ''}</strong>
+              ${memberIsAdmin ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Verwalter/in</div>' : ''}
+            </div>
+            ${(isAdmin && !isSelf) ? `<button class="btn btn-outline" style="padding:6px 12px;font-size:12.5px;flex:none;" onclick="confirmRemoveMember('${m.id}')">Entfernen</button>` : ''}
+          </div>`;
+        }).join('')}
       </div>` : ''}
-      <button class="btn btn-outline" onclick="closeSheet('householdOverlay')">Schließen</button>
+      <button class="btn btn-outline" style="margin-bottom:8px;" onclick="closeSheet('householdOverlay')">Schließen</button>
+      <button class="btn btn-outline" style="color:#a04a4a;border-color:#a04a4a;" onclick="confirmLeaveHousehold()">Haushalt verlassen</button>
+    `;
+    return;
+  }
+
+  if(householdSheetMode === 'confirmLeave'){
+    const isLastMember = h.members.length <= 1;
+    content.innerHTML = `
+      <h2>Haushalt verlassen?</h2>
+      <p class="subtle" style="margin:10px 0 18px;">${isLastMember
+        ? 'Du bist die einzige Person im Haushalt - beim Verlassen wird der Haushalt komplett aufgelöst. Dein Bestand bleibt lokal auf diesem Gerät erhalten.'
+        : 'Du siehst den gemeinsamen Bestand danach nicht mehr. Was schon auf diesem Gerät steht, bleibt lokal erhalten.'}</p>
+      <button class="btn btn-primary" style="margin-bottom:8px;background:#a04a4a;" onclick="leaveHousehold()" ${householdBusy?'disabled':''}>${householdBusy?'Einen Moment …':'Ja, verlassen'}</button>
+      <button class="btn btn-outline" onclick="householdSheetMode='joined'; renderHouseholdSheet();">Abbrechen</button>
+    `;
+    return;
+  }
+
+  if(householdSheetMode === 'confirmRemove'){
+    const target = h.members.find(m => m.id === pendingRemoveMemberId);
+    content.innerHTML = `
+      <h2>Mitglied entfernen?</h2>
+      <p class="subtle" style="margin:10px 0 18px;">${escapeHtml(target ? target.name : 'Diese Person')} wird aus dem Haushalt entfernt und sieht den gemeinsamen Bestand danach nicht mehr.</p>
+      <button class="btn btn-primary" style="margin-bottom:8px;background:#a04a4a;" onclick="removeMember()" ${householdBusy?'disabled':''}>${householdBusy?'Einen Moment …':'Ja, entfernen'}</button>
+      <button class="btn btn-outline" onclick="householdSheetMode='joined'; renderHouseholdSheet();">Abbrechen</button>
     `;
     return;
   }
@@ -3230,6 +3271,10 @@ async function submitCreateHousehold(){
     if(!res.ok) throw new Error('status ' + res.status);
     const data = await res.json();
     applyHouseholdJoined(data);
+    // Die gründende Person ist immer selbst der/die Verwalter/in - das steht schon
+    // fest, ohne auf den ersten Sync warten zu müssen.
+    state.household.createdByMemberId = data.memberId;
+    saveState();
     toast(`Haushalt gegründet: ${data.code}`);
   }catch(err){
     console.warn('Haushalt gründen fehlgeschlagen:', err);
@@ -3354,21 +3399,120 @@ async function syncFromDatabase(){
   try{
     const url = '/api/sync?householdId=' + encodeURIComponent(state.household.id) + '&since=' + (state.lastSync || 0);
     const res = await fetch(url);
+    // 404 heißt: der Haushalt existiert nicht mehr (z.B. weil die letzte andere
+    // Person ihn beim Verlassen aufgelöst hat) - lokal genauso behandeln wie ein
+    // Rauswurf, statt endlos gegen einen nicht mehr existierenden Haushalt zu pollen.
+    if(res.status === 404){ handleRemovedFromHousehold(); return; }
     if(!res.ok) throw new Error('status ' + res.status);
     const data = await res.json();
     mergeInventory(data.inventory);
-    if(Array.isArray(data.members)) state.household.members = data.members;
+    if(Array.isArray(data.members)){
+      state.household.members = data.members;
+      // Steht man selbst nicht mehr in der Mitgliederliste, wurde man entfernt
+      // (oder hat auf einem anderen Gerät schon verlassen) - dann auch auf diesem
+      // Gerät sauber zurück in den lokalen Modus wechseln, statt weiter fremde
+      // Haushaltsdaten anzuzeigen.
+      if(state.household.memberId && !data.members.some(m => m.id === state.household.memberId)){
+        handleRemovedFromHousehold();
+        return;
+      }
+    }
+    if(data.createdByMemberId) state.household.createdByMemberId = data.createdByMemberId;
     state.lastSync = data.timestamp || Date.now();
     saveState();
     renderAll();
+    if(householdSheetMode === 'joined') renderHouseholdSheet();
   }catch(err){
     console.warn('Haushalt-Abgleich fehlgeschlagen (nächster Versuch in 10s):', err);
   }
 }
 
+// Trennt dieses Gerät lokal vom Haushalt - genutzt, wenn der Sync merkt, dass man
+// selbst nicht mehr Mitglied ist (entfernt worden, oder Haushalt existiert nicht
+// mehr). Der eigene Bestand bleibt erhalten, nur als rein lokale Artikel.
+function handleRemovedFromHousehold(){
+  if(householdSyncTimer){ clearInterval(householdSyncTimer); householdSyncTimer = null; }
+  state.inventory.forEach(item => { delete item.dbId; delete item.addedByMemberId; });
+  state.household = { asked: true, id: null, memberId: null, memberName: '', code: '', members: [], createdByMemberId: null };
+  state.lastSync = 0;
+  saveState();
+  householdSheetMode = 'start';
+  closeSheet('householdOverlay');
+  toast('Du bist nicht mehr in diesem Haushalt - dein Bestand bleibt lokal erhalten');
+  renderAll();
+}
+
 function startHouseholdSync(){
   if(householdSyncTimer) return;   // läuft schon
   householdSyncTimer = setInterval(syncFromDatabase, 10000);
+}
+
+function confirmLeaveHousehold(){
+  householdSheetMode = 'confirmLeave';
+  renderHouseholdSheet();
+}
+
+function confirmRemoveMember(memberId){
+  pendingRemoveMemberId = memberId;
+  householdSheetMode = 'confirmRemove';
+  renderHouseholdSheet();
+}
+
+// Jede Person - egal ob Verwalter/in oder nicht - kann den Haushalt jederzeit
+// verlassen. War es die einzige Person, löst der Server den Haushalt komplett auf;
+// gab es noch andere, geht die Verwaltung an das am längsten dabei seiende
+// verbleibende Mitglied über (serverseitig in lib/household/leave.js entschieden).
+async function leaveHousehold(){
+  if(householdBusy) return;
+  householdBusy = true; renderHouseholdSheet();
+  try{
+    const res = await fetch('/api/household/leave', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ householdId: state.household.id, memberId: state.household.memberId }),
+    });
+    if(!res.ok) throw new Error('status ' + res.status);
+    if(householdSyncTimer){ clearInterval(householdSyncTimer); householdSyncTimer = null; }
+    // Bestand bleibt lokal erhalten - nur die Verknüpfung zum Haushalt wird gekappt,
+    // damit nichts mehr hoch- oder heruntergeladen wird.
+    state.inventory.forEach(item => { delete item.dbId; delete item.addedByMemberId; });
+    state.household = { asked: true, id: null, memberId: null, memberName: '', code: '', members: [], createdByMemberId: null };
+    state.lastSync = 0;
+    saveState();
+    householdSheetMode = 'start';
+    closeSheet('householdOverlay');
+    toast('Haushalt verlassen - dein Bestand bleibt lokal erhalten');
+    renderAll();
+  }catch(err){
+    console.warn('Haushalt verlassen fehlgeschlagen:', err);
+    toast('Konnte den Haushalt nicht verlassen - bitte Internetverbindung prüfen');
+  }finally{
+    householdBusy = false; renderHouseholdSheet();
+  }
+}
+
+// Nur die gründende Person sieht die "Entfernen"-Buttons (siehe renderHouseholdSheet);
+// der Server prüft die Berechtigung aber zusätzlich selbst ab (lib/household/remove-member.js).
+async function removeMember(){
+  if(householdBusy || !pendingRemoveMemberId) return;
+  householdBusy = true; renderHouseholdSheet();
+  const targetId = pendingRemoveMemberId;
+  try{
+    const res = await fetch('/api/household/remove-member', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ householdId: state.household.id, memberId: state.household.memberId, targetMemberId: targetId }),
+    });
+    if(res.status === 403){ toast('Nur die gründende Person kann Mitglieder entfernen'); householdSheetMode = 'joined'; return; }
+    if(!res.ok) throw new Error('status ' + res.status);
+    pendingRemoveMemberId = null;
+    householdSheetMode = 'joined';
+    toast('Mitglied entfernt');
+    await syncFromDatabase();
+  }catch(err){
+    console.warn('Mitglied entfernen fehlgeschlagen:', err);
+    toast('Konnte das Mitglied nicht entfernen - bitte Internetverbindung prüfen');
+  }finally{
+    householdBusy = false; renderHouseholdSheet();
+  }
 }
 
 /* ---------------- Einstellungen & Farbwelt ----------------
