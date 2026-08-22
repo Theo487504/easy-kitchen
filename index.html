@@ -1,0 +1,2937 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Easy Kitchen</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%235e7a4a'/%3E%3Cstop offset='100%25' stop-color='%2333472a'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='24' height='24' rx='6' fill='url(%23g)'/%3E%3Cpath d='M8.25 3v6c0 .8-.6 1.5-1.5 1.5H6M3.75 3v6c0 .8.6 1.5 1.5 1.5H6M6 3v18M18 12V3a3.5 3.5 0 0 0-3.5 3.5v4.5c0 .8.6 1.5 1.5 1.5h2Zm0 0v9' fill='none' stroke='white' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#5e7a4a" />
+<style>
+  /* ---------------- Farbwelten (in den Einstellungen umschaltbar) ----------------
+     Standard: "Olivgrün + Creme-Papier" - gedecktes, natürliches Olivgrün (bewusst
+     nicht knallig) auf warmem Papier-Creme statt sterilem Weiß, passend zum Papier-
+     Look der Rezeptkarte. Alternative: das ursprüngliche "Blau + Weiß".
+     Alles Farbige läuft über diese Variablen, damit ein Umschalten sofort überall
+     wirkt - deshalb auch Verläufe und Titel-Schrift als Variablen. */
+  :root{
+    --bg:#faf6ec;
+    --surface:#fffdf7;
+    --body-bg:#efe8d8;
+    --primary:#5e7a4a;
+    --primary-dark:#48613a;
+    --primary-light:#e3e8d2;
+    --surface-alt:#f2edde;
+    --surface-alt-2:#e8e2cd;
+    --text:#33302a;
+    --text-muted:#877f6f;
+    --border:#e6ddc9;
+    --success:#4f8f52;
+    --success-bg:#ecf5ea;
+    --warning:#d97706;
+    --warning-bg:#fdf5e3;
+    --danger:#dc2626;
+    --danger-bg:#fdf0ee;
+    --section-title:#a08c5f;
+    --greeting-grad:linear-gradient(135deg,#6d865a 0%, #48613a 100%);
+    --logo-grad:linear-gradient(135deg,#48613a,#33472a);
+    --title-font:Georgia,'Times New Roman',serif;
+    --overlay-bg:rgba(51,48,42,.45);
+    --radius-lg:20px;
+    --radius-md:14px;
+    --radius-sm:10px;
+    --shadow:0 1px 2px rgba(70,60,40,.06), 0 6px 16px rgba(70,60,40,.07);
+    --nav-h:64px;
+  }
+  body[data-theme="blau"]{
+    --bg:#ffffff;
+    --surface:#ffffff;
+    --body-bg:#f4f7fc;
+    --primary:#2563eb;
+    --primary-dark:#1d4ed8;
+    --primary-light:#dbeafe;
+    --surface-alt:#eff6ff;
+    --surface-alt-2:#e0edff;
+    --text:#0f172a;
+    --text-muted:#64748b;
+    --border:#e2e8f0;
+    --success:#16a34a;
+    --success-bg:#ecfdf3;
+    --warning:#d97706;
+    --warning-bg:#fffbeb;
+    --danger:#dc2626;
+    --danger-bg:#fef2f2;
+    --section-title:#1d4ed8;
+    --greeting-grad:linear-gradient(135deg,#2563eb 0%, #1e40af 100%);
+    --logo-grad:linear-gradient(135deg,#1d4ed8,#1e3a8a);
+    --title-font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --overlay-bg:rgba(15,23,42,.45);
+    --shadow:0 1px 2px rgba(15,23,42,.06), 0 6px 16px rgba(15,23,42,.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--body-bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app-shell{
+    max-width:640px;
+    margin:0 auto;
+    min-height:100vh;
+    background:var(--bg);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    box-shadow:0 0 40px rgba(15,23,42,.06);
+  }
+  /* Top bar */
+  .topbar{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:var(--surface);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:700;
+    font-size:17px;
+    letter-spacing:-.01em;
+  }
+  .brand .logo{
+    width:32px;height:32px;border-radius:10px;
+    background:var(--logo-grad);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;flex-shrink:0;
+  }
+  .desktop-nav{display:none;gap:4px;background:var(--surface-alt);padding:4px;border-radius:999px;}
+  .desktop-nav button{
+    border:none;background:transparent;padding:8px 16px;border-radius:999px;
+    font-size:13.5px;font-weight:600;color:var(--text-muted);cursor:pointer;
+  }
+  .desktop-nav button.active{background:var(--primary);color:#fff;}
+
+  main{flex:1;padding:18px 20px calc(var(--nav-h) + 28px);}
+  .view{display:none;animation:fade .25s ease;}
+  .view.active{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  h1.page-title{font-size:22px;margin:4px 0 4px;font-family:var(--title-font);letter-spacing:0;}
+  .subtle{color:var(--text-muted);font-size:14px;margin:0 0 18px;}
+
+  /* Cards */
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+    padding:16px;box-shadow:var(--shadow);
+  }
+  .section-title{
+    font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--section-title);margin:22px 0 10px;display:flex;align-items:center;justify-content:space-between;
+  }
+  .section-title:first-of-type{margin-top:0;}
+
+  /* Dashboard */
+  .greeting{
+    background:var(--greeting-grad);
+    color:#fff;border-radius:var(--radius-lg);padding:20px;margin-bottom:6px;
+  }
+  .greeting h1{margin:0 0 4px;font-size:20px;font-family:var(--title-font);}
+  .greeting p{margin:0;opacity:.9;font-size:13.5px;}
+  .stat-row{display:flex;gap:10px;margin-top:16px;}
+  .stat{flex:1;background:rgba(255,255,255,.14);border-radius:var(--radius-sm);padding:10px 12px;}
+  .stat b{display:block;font-size:20px;}
+  .stat span{font-size:11.5px;opacity:.85;}
+
+  /* Vier gleich große, flache Kacheln im 2x2-Raster. Vorher waren es drei hohe
+     Kacheln plus ein langer Streifen für die Schnellnotiz - das wirkte unruhig und
+     nahm viel Platz weg. Jetzt Symbol und Text nebeneinander statt untereinander,
+     dadurch etwa halb so hoch. */
+  .quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+  .quick-btn{
+    display:flex;flex-direction:row;align-items:center;gap:10px;min-height:56px;
+    background:var(--surface-alt);border:1px solid var(--primary-light);border-radius:var(--radius-md);
+    padding:11px 12px;cursor:pointer;font-family:inherit;text-align:left;transition:transform .15s ease;
+  }
+  .quick-btn:active{transform:scale(.97);}
+  .quick-btn .qicon{
+    width:30px;height:30px;border-radius:9px;background:var(--primary);color:#fff;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .quick-btn strong{font-size:13px;line-height:1.25;font-weight:700;}
+  /* Wird noch von der Personalisieren-Karte auf dem Start-Bildschirm genutzt */
+  .quick-btn small{color:var(--text-muted);font-size:11.5px;}
+
+  .expiry-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .expiry-item:last-child{border-bottom:none;}
+  .badge{
+    font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap;
+  }
+  .badge.danger{background:var(--danger-bg);color:var(--danger);}
+  .badge.warning{background:var(--warning-bg);color:var(--warning);}
+  .badge.success{background:var(--success-bg);color:var(--success);}
+  .badge.primary{background:var(--primary-light);color:var(--primary-dark);}
+
+  /* Inventory */
+  .cat-block{margin-bottom:18px;}
+  .cat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+  .cat-head h3{font-size:14.5px;margin:0;}
+  .pill{background:var(--surface-alt);color:var(--primary-dark);font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;}
+  .item-row{
+    display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);
+    border-radius:var(--radius-md);padding:11px 13px;margin-bottom:8px;
+  }
+  .item-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .item-row .info{flex:1;min-width:0;}
+  .item-row .info strong{display:block;font-size:14px;}
+  .item-row .info span{font-size:12px;color:var(--text-muted);}
+
+
+  /* Filters */
+  .filter-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;}
+  .chip{
+    flex-shrink:0;border:1px solid var(--border);background:var(--surface);color:var(--text);
+    padding:7px 14px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;
+  }
+  .chip.active{background:var(--primary);border-color:var(--primary);color:#fff;}
+
+  .recipe-card{
+    border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:14px;
+    background:var(--surface);cursor:pointer;box-shadow:var(--shadow);
+  }
+  .recipe-img{
+    height:110px;background:linear-gradient(135deg,var(--surface-alt-2),var(--primary-light));
+    display:flex;align-items:center;justify-content:center;color:var(--primary);position:relative;
+  }
+  .recipe-fav{position:absolute;top:10px;right:10px;background:var(--surface);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);cursor:pointer;}
+  .recipe-body{padding:13px 14px;}
+  .recipe-body h4{margin:0 0 6px;font-size:15px;font-family:var(--title-font);}
+  .tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+  .tag{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--surface-alt);color:var(--primary-dark);}
+  .meta-row{display:flex;gap:14px;color:var(--text-muted);font-size:12px;}
+  .meta-row span{display:flex;align-items:center;gap:4px;}
+  .match-note{font-size:11.5px;color:var(--success);font-weight:600;margin-top:6px;}
+  .missing-note{font-size:11.5px;color:var(--warning);font-weight:600;margin-top:2px;}
+
+  /* Shopping */
+  .shop-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border);}
+  .shop-item:last-child{border-bottom:none;}
+  .checkbox{
+    width:22px;height:22px;border-radius:7px;border:2px solid var(--border);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;
+  }
+  .checkbox.checked{background:var(--primary);border-color:var(--primary);}
+  .shop-item.checked .label{text-decoration:line-through;color:var(--text-muted);}
+
+  /* Bottom nav */
+  .bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;z-index:30;
+    max-width:640px;margin:0 auto;height:var(--nav-h);
+    background:var(--surface);backdrop-filter:blur(10px);
+    border-top:1px solid var(--border);display:flex;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .nav-btn{
+    flex:1;border:none;background:transparent;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;gap:3px;color:var(--text-muted);font-size:10.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .nav-btn.active{color:var(--primary);}
+  .nav-btn svg{width:21px;height:21px;}
+
+  /* Modal / sheet */
+  .overlay{
+    position:fixed;inset:0;background:var(--overlay-bg);z-index:50;display:none;
+    align-items:flex-end;justify-content:center;
+  }
+  .overlay.open{display:flex;}
+  .sheet{
+    background:var(--surface);width:100%;max-width:640px;border-radius:22px 22px 0 0;
+    max-height:88vh;overflow-y:auto;padding:20px 20px calc(24px + env(safe-area-inset-bottom));
+    animation:slideUp .25s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  /* Der Griff oben ist kein Deko-Element mehr: man kann das Sheet daran nach unten
+     ziehen, um es zu schließen. Wichtig für Handys:
+     - touch-action:none  -> der Browser übergibt die Geste SOFORT an uns, statt erst
+                             abzuwarten, ob gescrollt werden soll (sonst musste man
+                             erst lange draufdrücken, bevor das Ziehen ansprang)
+     - user-select/touch-callout:none -> kein blaues Markieren von Text beim Ziehen
+     Der Griff ist außerdem eine großzügige, unsichtbare Fläche (120x26px), damit man
+     ihn leicht trifft; der sichtbare Balken kommt aus ::after. */
+  .sheet-handle{
+    width:120px;height:26px;margin:-6px auto 8px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:grab;touch-action:none;
+    -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+  }
+  .sheet-handle::after{
+    content:'';display:block;width:38px;height:4px;background:var(--border);border-radius:99px;
+  }
+  .sheet-handle:active{cursor:grabbing;}
+  .sheet-handle:active::after{background:var(--text-muted);}
+  /* Während des Ziehens nirgends im Sheet Text markieren */
+  .sheet.dragging{-webkit-user-select:none;user-select:none;}
+  .sheet h2{font-size:17px;margin:0 0 4px;font-family:var(--title-font);}
+  .sheet .close-x{position:absolute;top:16px;right:16px;background:var(--surface-alt);border:none;width:30px;height:30px;border-radius:50%;cursor:pointer;color:var(--text-muted);}
+  .topbar-btn{width:34px;height:34px;border-radius:50%;border:none;background:var(--surface-alt);color:var(--primary);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+
+  /* Rezeptkarte im "schönes Blatt Papier"-Look */
+  .paper{
+    background:#fffdf7;
+    border:1px solid #ede5d4;
+    border-radius:14px;
+    padding:26px 22px;
+    font-family:Georgia,'Times New Roman',serif;
+    color:#33302a;
+    box-shadow:0 10px 30px rgba(0,0,0,.10), inset 0 0 40px rgba(222,205,168,.12);
+  }
+  .paper h2{font-family:Georgia,serif;font-size:22px;text-align:center;margin:2px 0 4px;color:#2b2620;}
+  .paper .paper-sub{text-align:center;font-size:12.5px;color:#8a8272;font-style:italic;margin-bottom:12px;}
+  .paper .paper-divider{display:flex;align-items:center;gap:10px;margin:14px 0 12px;color:#c9b98f;}
+  .paper .paper-divider::before,.paper .paper-divider::after{content:'';flex:1;border-top:1px solid #e3d8bf;}
+  .paper .paper-section{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#a08c5f;margin:16px 0 8px;text-align:center;}
+  .paper ul.paper-ing{list-style:none;margin:0;padding:0;font-size:14px;line-height:1.65;}
+  .paper ul.paper-ing li{padding:3px 0;border-bottom:1px dotted #e6dcc6;display:flex;align-items:baseline;gap:8px;}
+  .paper ul.paper-ing li:last-child{border-bottom:none;}
+  .paper ul.paper-ing li::before{content:'•';color:#c9a75f;}
+  .paper ol.paper-steps{margin:0;padding-left:0;list-style:none;counter-reset:step;font-size:14px;line-height:1.7;}
+  .paper ol.paper-steps li{counter-increment:step;display:flex;gap:12px;margin-bottom:12px;}
+  .paper ol.paper-steps li::before{
+    content:counter(step);
+    flex-shrink:0;width:24px;height:24px;border-radius:50%;
+    background:#f3ead6;color:#8a6d3b;border:1px solid #e0d2ae;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:700;font-family:-apple-system,sans-serif;margin-top:2px;
+  }
+  .paper .paper-tip{
+    margin-top:16px;background:#faf3e3;border:1px dashed #ddc994;border-radius:10px;
+    padding:10px 12px;font-size:13px;font-style:italic;color:#6e6046;
+  }
+  .paper .paper-meta{display:flex;justify-content:center;gap:16px;font-size:12.5px;color:#8a8272;margin-top:4px;font-family:-apple-system,sans-serif;}
+
+  .btn{
+    width:100%;padding:13px;border-radius:var(--radius-md);border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;
+  }
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-outline{background:var(--surface);border:1.5px solid var(--border);color:var(--text);}
+  .btn-ghost{background:var(--surface-alt);color:var(--primary-dark);}
+  .btn+.btn{margin-top:10px;}
+
+  .spinner{
+    width:34px;height:34px;border-radius:50%;border:3px solid var(--primary-light);border-top-color:var(--primary);
+    animation:spin .8s linear infinite;margin:24px auto;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .review-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+  .review-item:last-child{border-bottom:none;}
+  .review-item input[type=text]{
+    border:1px solid var(--border);border-radius:8px;padding:6px 8px;font-size:13px;width:100%;font-family:inherit;
+  }
+  .toast{
+    position:fixed;bottom:calc(var(--nav-h) + 16px);left:50%;transform:translateX(-50%);
+    background:var(--text);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;
+    z-index:60;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+  .empty{text-align:center;color:var(--text-muted);font-size:13px;padding:26px 10px;}
+
+  /* Farbauswahl in den Einstellungen */
+  .theme-option{
+    display:flex;align-items:center;gap:12px;padding:12px;border:1.5px solid var(--border);
+    border-radius:var(--radius-md);background:var(--surface);cursor:pointer;width:100%;
+    font-family:inherit;text-align:left;margin-bottom:10px;
+  }
+  .theme-option.active{border-color:var(--primary);box-shadow:0 0 0 2px var(--primary-light);}
+  .theme-swatch{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:flex;overflow:hidden;border:1px solid rgba(0,0,0,.08);}
+  .theme-swatch i{flex:1;display:block;}
+  .theme-option strong{display:block;font-size:14px;color:var(--text);}
+  .theme-option small{font-size:11.5px;color:var(--text-muted);}
+  .theme-check{margin-left:auto;color:var(--primary);width:20px;height:20px;flex-shrink:0;}
+
+  @media(min-width:721px){
+    .bottom-nav{display:none;}
+    .desktop-nav{display:flex;}
+    main{padding-bottom:32px;}
+  }
+  @media(max-width:720px){
+    .desktop-nav{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="logo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h2a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+      </span>
+      Easy Kitchen
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <nav class="desktop-nav" id="desktopNav"></nav>
+      <!-- Personalisieren-Knopf wird nur angezeigt, solange die App noch nicht
+           personalisiert wurde (danach steckt er in den Einstellungen). -->
+      <button class="topbar-btn" id="personalizeTopBtn" onclick="openPersonalizeSheet()" title="Personalisieren" aria-label="App personalisieren">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+      </button>
+      <button class="topbar-btn" onclick="openSettingsSheet()" title="Einstellungen" aria-label="Einstellungen">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <section class="view active" id="view-dashboard">
+      <div class="greeting">
+        <h1 id="greetingTitle">Willkommen 👋</h1>
+        <p id="greetingSub">Hier ist dein Überblick für heute.</p>
+        <div class="stat-row">
+          <div class="stat"><b id="statCount">0</b><span>Artikel im Bestand</span></div>
+          <div class="stat"><b id="statExpiring">0</b><span>laufen bald ab</span></div>
+          <div class="stat"><b id="statFav">0</b><span>Lieblingsgerichte</span></div>
+        </div>
+      </div>
+
+      <div id="personalizeBanner"></div>
+
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="openPhotoSheet()">
+          <span class="qicon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </span>
+          <strong>Foto hinzufügen</strong>
+        </button>
+        <button class="quick-btn" onclick="openManualAddSheet()">
+          <span class="qicon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
+          <strong>Von Hand eintragen</strong>
+        </button>
+        <button class="quick-btn" onclick="switchView('rezepte')">
+          <span class="qicon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h2a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>
+          </span>
+          <strong>Rezept vorschlagen</strong>
+        </button>
+        <button class="quick-btn" onclick="openNoteSheet()">
+          <span class="qicon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>
+          </span>
+          <strong>Schnellnotiz</strong>
+        </button>
+      </div>
+
+      <div class="section-title">Läuft bald ab</div>
+      <div class="card" id="expiringCard"></div>
+
+      <div class="section-title">Deine Lieblingsgerichte</div>
+      <div class="card" id="favCard"></div>
+    </section>
+
+    <!-- BESTAND -->
+    <section class="view" id="view-bestand">
+      <h1 class="page-title">Bestand</h1>
+      <p class="subtle">Alles, was gerade zuhause ist.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <button class="btn btn-outline" style="margin:0;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openPhotoSheet()">
+          <span style="width:16px;height:16px;color:var(--primary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span> Foto
+        </button>
+        <button class="btn btn-outline" style="margin:0;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openManualAddSheet()">
+          <span style="width:16px;height:16px;color:var(--primary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span> Von Hand
+        </button>
+      </div>
+      <div id="inventoryList"></div>
+    </section>
+
+    <!-- REZEPTE -->
+    <section class="view" id="view-rezepte">
+      <h1 class="page-title">Rezepte</h1>
+      <p class="subtle">Rezeptideen für deinen Bestand – die Grundauswahl unten ist noch eine feste Beispiel-Liste. Für ein individuelles KI-Rezept nutz den Button oben.</p>
+      <button class="btn btn-outline" style="margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openIdeaSheet()">
+        <span style="width:16px;height:16px;color:var(--primary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M5 5l2.5 2.5M16.5 16.5 19 19M3 12h4M17 12h4M5 19l2.5-2.5M16.5 7.5 19 5"/></svg></span> Eigene Rezeptidee
+      </button>
+      <div class="filter-row" id="filterRow"></div>
+      <div id="recipeList"></div>
+    </section>
+
+    <!-- EINKAUFEN -->
+    <section class="view" id="view-einkaufen">
+      <h1 class="page-title">Einkaufsliste</h1>
+      <p class="subtle">Abhaken, was du gekauft hast – es wandert dann direkt in deinen Bestand.</p>
+
+      <button class="btn btn-outline" style="margin-bottom:18px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="addFavoritesToShopping()">
+        <span style="width:15px;height:15px;color:var(--primary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg></span> Zutaten für Lieblingsgerichte ergänzen
+      </button>
+
+      <div class="section-title">Für ausgewählte Rezepte</div>
+      <div class="card" id="shopRecipeCard"></div>
+
+      <div class="section-title">Nachkauf-Vorschläge</div>
+      <div class="card" id="shopRestockCard"></div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav" id="bottomNav"></nav>
+</div>
+
+<!-- Photo capture sheet -->
+<div class="overlay" id="photoOverlay">
+  <div class="sheet" style="position:relative;">
+    <button class="close-x" onclick="closeSheet('photoOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="photoSheetContent"></div>
+  </div>
+</div>
+
+<!-- Note / dictation sheet -->
+<div class="overlay" id="noteOverlay">
+  <div class="sheet" style="position:relative;">
+    <button class="close-x" onclick="closeSheet('noteOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="noteSheetContent"></div>
+  </div>
+</div>
+
+<!-- Recipe detail sheet -->
+<div class="overlay" id="recipeOverlay">
+  <div class="sheet" style="position:relative;">
+    <button class="close-x" onclick="closeSheet('recipeOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="recipeSheetContent"></div>
+  </div>
+</div>
+
+<!-- Eigene Rezeptidee sheet -->
+<div class="overlay" id="ideaOverlay">
+  <div class="sheet" style="position:relative;">
+    <button class="close-x" onclick="closeSheet('ideaOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="ideaSheetContent"></div>
+  </div>
+</div>
+
+<!-- Artikel von Hand zum Bestand hinzufügen -->
+<div class="overlay" id="manualAddOverlay">
+  <div class="sheet" style="position:relative;">
+    <button class="close-x" onclick="closeSheet('manualAddOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="manualAddSheetContent"></div>
+  </div>
+</div>
+
+<!-- Einstellungen -->
+<div class="overlay" id="settingsOverlay">
+  <div class="sheet" style="position:relative;">
+    <button class="close-x" onclick="closeSheet('settingsOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="settingsSheetContent"></div>
+  </div>
+</div>
+
+<!-- Schöne Rezeptkarte (Papier-Look) -->
+<div class="overlay" id="recipeCardOverlay">
+  <div class="sheet" style="position:relative;background:transparent;box-shadow:none;padding:12px 12px calc(20px + env(safe-area-inset-bottom));">
+    <button class="close-x" onclick="closeSheet('recipeCardOverlay')" style="z-index:5;background:#fff;">✕</button>
+    <div id="recipeCardContent"></div>
+  </div>
+</div>
+
+<!-- Onboarding-Popup: einmalig beim allerersten Öffnen -->
+<div class="overlay" id="onboardingOverlay">
+  <div class="sheet" style="position:relative;">
+    <div class="sheet-handle"></div>
+    <div id="onboardingSheetContent"></div>
+  </div>
+</div>
+
+<!-- Personalisierung: über das Popup oder jederzeit über den Knopf oben rechts -->
+<div class="overlay" id="personalizeOverlay">
+  <div class="sheet" style="position:relative;">
+    <button class="close-x" onclick="closeSheet('personalizeOverlay')">✕</button>
+    <div class="sheet-handle"></div>
+    <div id="personalizeSheetContent"></div>
+  </div>
+</div>
+
+<!-- Haushalt-Sharing: Gründen/Beitreten. Kein ✕ oben - Entscheidung läuft bewusst über
+     den eigenen "Später"-Knopf im Inhalt, analog zum Onboarding-Popup. -->
+<div class="overlay" id="householdOverlay">
+  <div class="sheet" style="position:relative;">
+    <div class="sheet-handle"></div>
+    <div id="householdSheetContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* Wird bei jeder Auslieferung hochgezählt - so lässt sich in den Einstellungen
+   sofort sehen, ob die neueste Version wirklich geladen wurde. */
+const APP_VERSION = '2026.08.21-1';
+
+/* ---------------- Icons ---------------- */
+const ICONS = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg>',
+  chef:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h2a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></svg>',
+  cart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  flame:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+  drop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69s-7 7.44-7 11.31a7 7 0 0 0 14 0c0-3.87-7-11.31-7-11.31Z"/></svg>',
+  heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>',
+  heartFill:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  camera:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+  receipt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2h16v20l-3-2-2 2-2-2-2 2-2-2-2 2-3-2Z"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="15" x2="12" y2="15"/></svg>',
+  fridge:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="5" y1="10" x2="19" y2="10"/><line x1="9" y1="6" x2="9" y2="8"/><line x1="9" y1="14" x2="9" y2="16"/></svg>',
+  pantry:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>',
+  mic:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v4M8 23h8"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  sparkles:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M5 5l2.5 2.5M16.5 16.5 19 19M3 12h4M17 12h4M5 19l2.5-2.5M16.5 7.5 19 5"/></svg>',
+};
+
+/* ---------------- Mock data ---------------- */
+const todayOffset = d => { const t=new Date(); t.setDate(t.getDate()+d); return t; };
+const fmtDate = d => d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+
+let idCounter = 100;
+const state = {
+  view: 'dashboard',
+  // Startet bewusst LEER - früher waren hier Demo-Artikel vorbefüllt, was für neue
+  // Nutzer (Familie/Freunde) verwirrend war ("Wieso steht da, ich hätte Tofu?").
+  // Bestehende Nutzer sind nicht betroffen, deren gespeicherter Stand wird geladen.
+  inventory: [],
+  cookCounts: {},   // recipeId -> times "cooked"
+  favorites: new Set(),
+  customRecipes: [],   // per KI aus eigenen Rezeptideen erstellte Rezepte
+  // Schnellnotizen werden bewusst NICHT als Liste gespeichert/angezeigt - sie werden direkt
+  // ausgewertet und in Bestand/Favoriten/Personalisierung übernommen, siehe applyNoteResult().
+  shopping: {
+    recipeItems: [],   // {id,label,checked,fromRecipe}
+    // Nachkauf-Vorschläge sind jetzt ECHT statt fest einprogrammiert: Hier landet
+    // automatisch, was aus dem Bestand entfernt/aufgebraucht wurde (✕ im Bestand
+    // oder "aufgebraucht" nach dem Kochen). Früher standen hier erfundene Beispiele
+    // mit der falschen Behauptung "wird laut Kassenzetteln regelmäßig nachgekauft".
+    restock: []        // {id,label,checked}
+  },
+  filters: { vegan:false, vegetarian:false, fast:false },
+  theme: 'oliv',   // 'oliv' (Standard) oder 'blau' - umschaltbar in den Einstellungen
+  // Vorhandene Küchengeräte (in den Einstellungen abhakbar). Leer = keine Angabe;
+  // dann schränkt die KI nichts ein. Sobald etwas angehakt ist, richten sich die
+  // KI-Rezepte danach und schlagen nichts vor, was man gar nicht zubereiten kann.
+  appliances: [],
+  customAppliances: [],   // selbst hinzugefügte Geräte, die nicht in der Standardliste stehen
+  appliancesSet: false,   // true, sobald die Geräteliste einmal mit "Fertig" abgeschlossen wurde
+  personalization: {
+    asked:false, done:false,           // asked: Popup schon mal gezeigt? done: Befragung abgeschlossen?
+    goals: [],                          // z.B. ['Gesünder ernähren', 'Zeit sparen im Alltag']
+    favoriteIngredients: '',            // Freitext
+    useStockFirst: null,                // nur relevant falls Ziel "Geld sparen" gewählt
+    cookTime: null,                     // nur relevant falls Ziel "Zeit sparen" gewählt
+    householdSize: null,                // nur relevant falls Ziel "Überblick behalten" gewählt
+    dietType: [],                       // nur relevant falls Ziel "Gesünder ernähren" gewählt
+    dietFocus: [],                      // nur relevant falls Ziel "Gesünder ernähren" gewählt
+  },
+  // ---- Haushalt-Sharing (Familie/Freunde teilen sich Bestand + Einkaufsliste) ----
+  // Bleibt alles null/leer, solange niemand einen Haushalt gegründet hat oder
+  // beigetreten ist - die App funktioniert dann wie bisher rein lokal.
+  householdId: null,
+  memberId: null,
+  memberName: '',
+  household: { code: '', members: [] },  // members: [{id,name,color}], vom Server befüllt
+  lastSync: 0,                            // Zeitstempel (ms) des letzten erfolgreichen Sync
+  householdSetupAsked: false,             // true, sobald der Einrichten-Dialog einmal gezeigt/übersprungen wurde
+};
+
+/* ---------------- Speicherung (localStorage) ----------------
+   Der komplette Zustand (Bestand, Favoriten, Personalisierung, eigene Rezepte, ...)
+   wird nach jeder Änderung im Browser gespeichert, damit er ein Neuladen
+   der Seite oder ein Beenden der App übersteht. Bleibt lokal auf dem
+   jeweiligen Gerät (kein Server-Speicher) - Handy und Desktop haben also
+   weiterhin getrennte Stände, aber nichts geht mehr beim Neuladen verloren. */
+const STORAGE_KEY = 'easyKitchenState_v1';
+
+function saveState(){
+  try{
+    const payload = {
+      idCounter,
+      inventory: state.inventory.map(i => ({...i, expiry: i.expiry.toISOString()})),
+      cookCounts: state.cookCounts,
+      favorites: Array.from(state.favorites),
+      customRecipes: state.customRecipes,
+      shopping: state.shopping,
+      filters: state.filters,
+      theme: state.theme,
+      appliances: state.appliances,
+      customAppliances: state.customAppliances,
+      appliancesSet: state.appliancesSet,
+      personalization: state.personalization,
+      householdId: state.householdId,
+      memberId: state.memberId,
+      memberName: state.memberName,
+      household: state.household,
+      lastSync: state.lastSync,
+      householdSetupAsked: state.householdSetupAsked,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  }catch(e){
+    // z.B. Safari Private Mode / Speicher voll - Zustand bleibt dann nur für diese Sitzung erhalten.
+    console.warn('Konnte Zustand nicht speichern:', e);
+  }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return false;
+    const saved = JSON.parse(raw);
+    if(!saved || typeof saved !== 'object') return false;
+
+    if(Number.isFinite(saved.idCounter)) idCounter = saved.idCounter;
+    if(Array.isArray(saved.inventory)){
+      state.inventory = saved.inventory.map(i => ({...i, expiry: new Date(i.expiry)}));
+      // Migration: Die früheren Demo-Artikel aus der Prototyp-Zeit (feste IDs 1-12 mit
+      // genau diesen Namen) auch aus gespeicherten Beständen entfernen. Echte, per Foto
+      // oder Notiz erfasste Artikel haben IDs ab 101 und sind daher nicht betroffen.
+      const demoNames = ['Milch','Eier (6er)','Spinat','Naturjoghurt','Tofu','Paprika','Vollkornnudeln','Rote Linsen','Kichererbsen (Dose)','Haferflocken','Reis','Zwiebeln'];
+      state.inventory = state.inventory.filter(i => !(typeof i.id === 'number' && i.id >= 1 && i.id <= 12 && demoNames.includes(i.name)));
+    }
+    if(saved.cookCounts && typeof saved.cookCounts === 'object') state.cookCounts = saved.cookCounts;
+    if(Array.isArray(saved.favorites)) state.favorites = new Set(saved.favorites);
+    if(Array.isArray(saved.customRecipes)) state.customRecipes = saved.customRecipes;
+    // saved.notes (aus älteren Versionen) wird bewusst nicht mehr übernommen - die
+    // Notizenliste gibt es nicht mehr, siehe Kommentar beim state-Objekt oben.
+    if(saved.shopping && typeof saved.shopping === 'object'){
+      state.shopping = saved.shopping;
+      if(!Array.isArray(state.shopping.recipeItems)) state.shopping.recipeItems = [];
+      if(!Array.isArray(state.shopping.restock)) state.shopping.restock = [];
+      // Migration: die früheren fest einprogrammierten Beispiel-Vorschläge (Milch/Eier/
+      // Haferflocken mit den Alt-IDs r1-r3) aus gespeicherten Ständen entfernen.
+      state.shopping.restock = state.shopping.restock.filter(i => !['r1','r2','r3'].includes(i.id));
+    }
+    if(saved.filters && typeof saved.filters === 'object') state.filters = saved.filters;
+    if(saved.personalization && typeof saved.personalization === 'object') state.personalization = {...state.personalization, ...saved.personalization};
+    if(saved.theme === 'oliv' || saved.theme === 'blau') state.theme = saved.theme;
+    if(Array.isArray(saved.appliances)) state.appliances = saved.appliances.filter(a=>typeof a === 'string');
+    if(Array.isArray(saved.customAppliances)) state.customAppliances = saved.customAppliances.filter(a=>typeof a === 'string');
+    if(typeof saved.appliancesSet === 'boolean') state.appliancesSet = saved.appliancesSet;
+    if(typeof saved.householdId === 'string') state.householdId = saved.householdId;
+    if(typeof saved.memberId === 'string') state.memberId = saved.memberId;
+    if(typeof saved.memberName === 'string') state.memberName = saved.memberName;
+    if(saved.household && typeof saved.household === 'object'){
+      state.household = {
+        code: typeof saved.household.code === 'string' ? saved.household.code : '',
+        members: Array.isArray(saved.household.members) ? saved.household.members : [],
+      };
+    }
+    if(Number.isFinite(saved.lastSync)) state.lastSync = saved.lastSync;
+    if(typeof saved.householdSetupAsked === 'boolean') state.householdSetupAsked = saved.householdSetupAsked;
+    return true;
+  }catch(e){
+    console.warn('Konnte gespeicherten Zustand nicht laden:', e);
+    return false;
+  }
+}
+
+const hadSavedState = loadState();
+
+/* Rezepte sind jetzt richtige, ausführliche Rezepte statt Dreizeiler:
+   - "needs"/"missing" bleiben die reinen Zutaten-Namen (für Bestand-Abgleich & Einkaufsliste)
+   - "ingredients" ist die Anzeige-Liste MIT Mengenangaben (für 2 Portionen)
+   - "steps" sind ausführliche Schritte mit Hitze, Zeiten und Konsistenz-Hinweisen
+   - "tip" ist ein kleiner Extra-Tipp für die Rezeptkarte */
+const RECIPE_POOL = [
+  {
+    id:'rc1', name:'Linsen-Spinat-Curry', tags:['Vegan','Proteinreich'], time:25, kcal:410, protein:22, portions:2,
+    summary:'Zwiebeln und Currypaste anrösten, Linsen in Kokosmilch weich köcheln, Spinat unterheben – cremiges Curry in einem Topf.',
+    needs:['Rote Linsen','Spinat','Zwiebeln'], missing:['Kokosmilch','Currypaste'],
+    ingredients:['180 g rote Linsen','150 g Spinat (frisch oder TK)','2 Zwiebeln','400 ml Kokosmilch','1–2 EL rote Currypaste','1 EL Öl','350 ml Wasser','Salz & Pfeffer'],
+    steps:[
+      'Die Zwiebeln schälen, fein würfeln und in einem Topf mit 1 EL Öl bei mittlerer Hitze 3–4 Minuten glasig anschwitzen, bis sie leicht goldig duften.',
+      'Die Currypaste dazugeben und etwa 1 Minute mitrösten – dadurch entfalten sich die Aromen deutlich besser, als wenn man sie nur einrührt.',
+      'Die Linsen kurz in einem Sieb abspülen, dann zusammen mit der Kokosmilch und dem Wasser in den Topf geben. Einmal aufkochen lassen.',
+      'Bei kleiner Hitze offen ca. 12–15 Minuten köcheln lassen und zwischendurch umrühren, damit nichts ansetzt. Die Linsen sollen weich sein, aber noch leichten Biss haben.',
+      'Den Spinat unterheben und nur 2–3 Minuten zusammenfallen lassen, damit er schön grün bleibt.',
+      'Mit Salz und Pfeffer abschmecken. Wenn das Curry zu dick ist, einfach einen Schluck Wasser einrühren.'
+    ],
+    tip:'Dazu passt Reis oder ein Stück Fladenbrot. Ein Spritzer Zitrone am Ende macht das Curry frischer.'
+  },
+  {
+    id:'rc2', name:'Kichererbsen-Bowl mit Joghurt-Dip', tags:['Vegetarisch','Proteinreich','Schnell'], time:20, kcal:380, protein:19, portions:2,
+    summary:'Kichererbsen knusprig anbraten, mit frischer Paprika auf Zitronen-Joghurt anrichten – schnelle, warme Bowl.',
+    needs:['Kichererbsen (Dose)','Naturjoghurt','Paprika'], missing:['Zitrone'],
+    ingredients:['1 Dose Kichererbsen (ca. 400 g)','200 g Naturjoghurt','1 rote Paprika','½ Zitrone (Saft)','1 EL Öl','1 TL Paprikapulver','½ TL Kreuzkümmel (wenn da)','Salz & Pfeffer'],
+    steps:[
+      'Die Kichererbsen in ein Sieb geben, gründlich abspülen und gut abtropfen lassen – je trockener sie sind, desto knuspriger werden sie.',
+      'Öl in einer Pfanne bei mittlerer bis hoher Hitze erwärmen. Die Kichererbsen mit Paprikapulver, Kreuzkümmel und etwas Salz 6–8 Minuten anbraten, dabei nur gelegentlich schwenken, bis sie goldbraun sind.',
+      'Währenddessen die Paprika waschen, entkernen und in schmale Streifen schneiden.',
+      'Für den Dip den Joghurt mit dem Zitronensaft, einer Prise Salz und Pfeffer glatt rühren.',
+      'Alles in einer Schüssel anrichten: unten der Joghurt-Dip, darauf die warmen Kichererbsen und die Paprikastreifen.'
+    ],
+    tip:'Wer mag, streut noch frische Kräuter (Petersilie oder Minze) darüber – auch getrocknete funktionieren.'
+  },
+  {
+    id:'rc3', name:'Gebratener Tofu mit Gemüsereis', tags:['Vegan','Proteinreich'], time:30, kcal:450, protein:26, portions:2,
+    summary:'Tofu goldbraun braten, Gemüse dazu, mit Ingwer-Sojasauce abschmecken und auf Reis servieren.',
+    needs:['Tofu','Reis','Paprika','Zwiebeln'], missing:['Sojasauce','Ingwer'],
+    ingredients:['400 g Tofu (natur oder geräuchert)','150 g Reis','1 Paprika','1 Zwiebel','3 EL Sojasauce','1 daumengroßes Stück Ingwer','2 EL Öl'],
+    steps:[
+      'Den Reis nach Packungsanleitung in gesalzenem Wasser kochen (meist ca. 12–15 Minuten) und danach zugedeckt ziehen lassen.',
+      'Den Tofu zwischen Küchenpapier kurz ausdrücken – so wird er beim Braten deutlich knuspriger. Dann in ca. 2 cm große Würfel schneiden.',
+      'Öl in einer großen Pfanne stark erhitzen. Die Tofuwürfel darin 6–8 Minuten goldbraun braten und erst wenden, wenn sich eine Kruste gebildet hat.',
+      'Zwiebel und Paprika in Streifen schneiden, zum Tofu geben und 3–4 Minuten mitbraten, bis das Gemüse leicht Farbe bekommt, aber noch Biss hat.',
+      'Den Ingwer fein reiben oder hacken, mit der Sojasauce in die Pfanne geben und alles einmal kräftig durchschwenken, sodass sich die Sauce überall verteilt.',
+      'Den Reis auflockern, auf Teller verteilen und die Tofu-Gemüse-Pfanne darüber anrichten.'
+    ],
+    tip:'Ein Klecks Erdnussmus in die Sauce gerührt macht daraus im Handumdrehen ein Erdnuss-Curry-Aroma.'
+  },
+  {
+    id:'rc4', name:'Overnight Oats mit Joghurt', tags:['Vegetarisch','Schnell'], time:10, kcal:340, protein:15, portions:2,
+    summary:'Haferflocken mit Joghurt und Milch verrühren, über Nacht in den Kühlschrank, morgens Beeren drauf – fertig.',
+    needs:['Haferflocken','Naturjoghurt','Milch'], missing:['Beeren'],
+    ingredients:['100 g Haferflocken','200 g Naturjoghurt','150 ml Milch','1 Handvoll Beeren (frisch oder TK)','1 TL Honig oder Ahornsirup (optional)','1 Prise Zimt'],
+    steps:[
+      'Haferflocken, Joghurt und Milch in einer Schüssel oder einem Glas mit Deckel gut verrühren, bis keine trockenen Flocken mehr zu sehen sind.',
+      'Nach Geschmack mit Honig oder Ahornsirup leicht süßen und eine Prise Zimt unterrühren.',
+      'Abgedeckt über Nacht (mindestens aber 4 Stunden) in den Kühlschrank stellen – die Flocken saugen sich voll und werden wunderbar cremig.',
+      'Am Morgen einmal umrühren. Ist die Masse zu fest, einfach einen Schluck Milch unterrühren.',
+      'Mit den Beeren toppen. Tiefkühl-Beeren am besten schon am Vorabend mit ins Glas geben, dann tauen sie über Nacht auf und geben schönen Saft ab.'
+    ],
+    tip:'Hält sich abgedeckt 2 Tage im Kühlschrank – lohnt sich also, gleich die doppelte Menge zu machen.'
+  },
+  {
+    id:'rc5', name:'Nudeln mit Spinat-Ei-Sauce', tags:['Vegetarisch'], time:22, kcal:520, protein:24, portions:2,
+    summary:'Nudeln kochen, Spinat andünsten, heiße Nudeln mit Ei-Parmesan-Mix cremig verrühren – wie Carbonara, nur grüner.',
+    needs:['Vollkornnudeln','Spinat','Eier (6er)'], missing:['Parmesan'],
+    ingredients:['250 g Vollkornnudeln','200 g Spinat','3 Eier','40 g Parmesan (gerieben)','1 EL Öl oder Butter','1 kleine Knoblauchzehe (wenn da)','Salz & Pfeffer'],
+    steps:[
+      'Die Nudeln in reichlich gesalzenem Wasser nach Packungsanleitung bissfest kochen. Kurz vor dem Abgießen eine Tasse Nudelwasser beiseitestellen.',
+      'Währenddessen die Eier mit dem geriebenen Parmesan, Salz und ordentlich Pfeffer in einer Schüssel verquirlen.',
+      'Öl oder Butter in einer großen Pfanne erhitzen, nach Belieben den gehackten Knoblauch kurz anschwitzen und den Spinat bei mittlerer Hitze 2–3 Minuten zusammenfallen lassen.',
+      'Die abgegossenen, noch heißen Nudeln direkt in die Pfanne zum Spinat geben und die Pfanne vom Herd ziehen.',
+      'Die Ei-Parmesan-Mischung zügig unterrühren – die Resthitze lässt sie cremig stocken, ohne dass Rührei entsteht. Bei Bedarf schluckweise Nudelwasser dazu, bis die Sauce seidig ist.',
+      'Sofort servieren, mit extra Parmesan und Pfeffer bestreut.'
+    ],
+    tip:'Wichtig ist, die Eier NICHT auf der heißen Herdplatte unterzurühren – sonst gibt es Rührei statt cremiger Sauce.'
+  },
+  {
+    id:'rc6', name:'Zwiebel-Linsen-Eintopf', tags:['Vegan','Proteinreich'], time:35, kcal:390, protein:21, portions:2,
+    summary:'Zwiebeln und Paprika anschwitzen, Linsen in Brühe 20 Minuten köcheln, abschmecken – wärmender Eintopf aus einem Topf.',
+    needs:['Rote Linsen','Zwiebeln','Paprika'], missing:['Gemüsebrühe'],
+    ingredients:['200 g rote Linsen','2 Zwiebeln','1 Paprika','800 ml Gemüsebrühe','1 EL Öl','1 TL Paprikapulver','1 Lorbeerblatt (wenn da)','Salz, Pfeffer & ein Spritzer Essig'],
+    steps:[
+      'Die Zwiebeln würfeln und in einem großen Topf mit dem Öl bei mittlerer Hitze 4–5 Minuten anschwitzen, bis sie weich und leicht gebräunt sind – das gibt dem Eintopf seine Grundsüße.',
+      'Die Paprika würfeln, dazugeben und 2–3 Minuten mitbraten. Das Paprikapulver einrühren und nur kurz mitrösten, damit es nicht bitter wird.',
+      'Die abgespülten Linsen und die Gemüsebrühe dazugeben, nach Belieben ein Lorbeerblatt hinein, und alles einmal aufkochen.',
+      'Bei kleiner Hitze 20 Minuten sanft köcheln lassen und ab und zu umrühren. Die Linsen zerfallen dabei teilweise und binden den Eintopf ganz von selbst.',
+      'Das Lorbeerblatt entfernen. Mit Salz, Pfeffer und einem kleinen Spritzer Essig abschmecken – die Säure hebt den Geschmack deutlich.',
+      'Wer es sämiger mag, püriert ein Drittel des Eintopfs kurz mit dem Stabmixer und rührt es zurück.'
+    ],
+    tip:'Schmeckt am nächsten Tag aufgewärmt fast noch besser und lässt sich gut einfrieren.'
+  },
+];
+
+// Eingebaute Rezepte + selbst per KI erstellte Ideen zusammen
+function allRecipes(){ return RECIPE_POOL.concat(state.customRecipes); }
+
+/* ---------------- Nav ---------------- */
+const NAV_ITEMS = [
+  {key:'dashboard', label:'Start', icon:ICONS.home},
+  {key:'bestand', label:'Bestand', icon:ICONS.box},
+  {key:'rezepte', label:'Rezepte', icon:ICONS.chef},
+  {key:'einkaufen', label:'Einkaufen', icon:ICONS.cart},
+];
+
+function renderNav(){
+  const bottom = document.getElementById('bottomNav');
+  const desktop = document.getElementById('desktopNav');
+  bottom.innerHTML = NAV_ITEMS.map(n => `
+    <button class="nav-btn ${state.view===n.key?'active':''}" onclick="switchView('${n.key}')">
+      ${n.icon}<span>${n.label}</span>
+    </button>`).join('');
+  desktop.innerHTML = NAV_ITEMS.map(n => `
+    <button class="${state.view===n.key?'active':''}" onclick="switchView('${n.key}')">${n.label}</button>`).join('');
+}
+
+function switchView(view){
+  state.view = view;
+  // Beim Ansichtswechsel darf die Bestand-Liste wieder frisch nach Haltbarkeit
+  // sortieren (während man IN der Ansicht arbeitet, bleibt die Reihenfolge stabil).
+  inventoryOrderCache = null;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  renderNav();
+  renderAll();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ---------------- Toast ---------------- */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+/* ---------------- Dashboard ---------------- */
+function daysUntil(d){
+  const diff = Math.ceil((d - new Date())/(1000*60*60*24));
+  return diff;
+}
+function expiryBadge(d){
+  const days = daysUntil(d);
+  if(days<=2) return `<span class="badge danger">noch ${days}T</span>`;
+  if(days<=6) return `<span class="badge warning">noch ${days}T</span>`;
+  // Früher stand hier nochmal das Datum - das steht aber schon in der Zeile davor
+  // ("haltbar bis 04.09.") und wirkte doppelt. Jetzt immer die Restzeit, bei langer
+  // Haltbarkeit gerundet in Monaten statt einer unhandlichen Tageszahl.
+  if(days<=60) return `<span class="badge success">noch ${days}T</span>`;
+  return `<span class="badge success">noch ${Math.round(days/30)} Mon.</span>`;
+}
+
+function renderDashboard(){
+  // Begrüßung passend zum Zustand: ganz neue Nutzer werden anders begrüßt als
+  // Nutzer, die die App schon befüllt haben.
+  const isNew = !state.inventory.length && !state.favorites.size && !state.customRecipes.length;
+  document.getElementById('greetingTitle').textContent = isNew ? 'Willkommen 👋' : 'Willkommen zurück 👋';
+  document.getElementById('greetingSub').textContent = isNew
+    ? 'Schön, dass du da bist! Mach am besten zuerst ein Foto von deinem Kühlschrank oder Kassenzettel.'
+    : 'Hier ist dein Überblick für heute.';
+
+  document.getElementById('statCount').textContent = state.inventory.length;
+  const expiring = state.inventory.filter(i=>daysUntil(i.expiry)<=4).sort((a,b)=>a.expiry-b.expiry);
+  document.getElementById('statExpiring').textContent = expiring.length;
+  document.getElementById('statFav').textContent = state.favorites.size;
+
+  // Personalisieren-Knopf oben rechts nur zeigen, solange noch nicht personalisiert -
+  // danach ist er überflüssig und die Personalisierung steckt in den Einstellungen.
+  const topBtn = document.getElementById('personalizeTopBtn');
+  if(topBtn) topBtn.style.display = state.personalization.done ? 'none' : 'flex';
+
+  // Fest sichtbarer Hinweis, solange die App noch nicht personalisiert wurde - unabhängig
+  // vom einmaligen Popup, damit es auch bei bereits genutzter App oder falls das Popup
+  // mal nicht auftaucht, immer einen zuverlässigen Weg zur Personalisierung gibt.
+  const banner = document.getElementById('personalizeBanner');
+  if(banner){
+    banner.innerHTML = !state.personalization.done ? `
+      <button class="quick-btn" style="width:100%;box-sizing:border-box;flex-direction:row;align-items:center;gap:10px;margin-top:14px;" onclick="openPersonalizeSheet()">
+        <span class="qicon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        </span>
+        <span>
+          <strong style="display:block;">App personalisieren</strong>
+          <small>Für dich oder deine Familie einrichten</small>
+        </span>
+      </button>` : '';
+  }
+
+  const expCard = document.getElementById('expiringCard');
+  expCard.innerHTML = expiring.length ? expiring.map(i=>`
+    <div class="expiry-item">
+      <div class="info" style="flex:1"><strong>${i.name}</strong><div style="font-size:12px;color:var(--text-muted)">${i.category}</div></div>
+      ${expiryBadge(i.expiry)}
+    </div>`).join('') : `<div class="empty">Aktuell läuft nichts Kritisches ab 🎉</div>`;
+
+  const favCard = document.getElementById('favCard');
+  const favs = allRecipes().filter(r=>state.favorites.has(r.id));
+  favCard.innerHTML = favs.length ? favs.map(r=>`
+    <div class="expiry-item" style="cursor:pointer" onclick="openRecipe('${r.id}')">
+      <div class="info" style="flex:1"><strong>${r.name}</strong><div style="font-size:12px;color:var(--text-muted)">${r.tags.join(' · ')}</div></div>
+      <span class="badge primary">${state.cookCounts[r.id]||0}× gekocht</span>
+    </div>`).join('') : `<div class="empty">Noch keine Lieblingsgerichte gelernt.<br>Koch ein paar Rezepte nach, dann merkt sich Easy Kitchen deine Favoriten automatisch.</div>`;
+}
+
+/* ---------------- Inventory ---------------- */
+function removeItem(id){
+  const item = state.inventory.find(i=>i.id===id);
+  state.inventory = state.inventory.filter(i=>i.id!==id);
+  // Entfernt heißt meist "aufgebraucht" - deshalb als echten Nachkauf-Vorschlag merken.
+  if(item) addRestockSuggestion(item.name);
+  renderAll();
+  toast('Artikel entfernt – steht jetzt als Vorschlag auf der Einkaufsliste');
+}
+
+let editingExpiryId = null;
+const toISODate = d => { const t=new Date(d); t.setMinutes(t.getMinutes()-t.getTimezoneOffset()); return t.toISOString().slice(0,10); };
+
+/* Merkt sich die aktuelle Reihenfolge der Bestand-Liste, damit ein Artikel nach dem
+   Bearbeiten seines Datums NICHT sofort an eine andere Stelle springt (das war vorher
+   kurz verwirrend). Erst beim nächsten Wechsel auf die Bestand-Ansicht wird wieder
+   frisch nach Haltbarkeit sortiert. */
+let inventoryOrderCache = null;   // {Kategorie: [ids]} oder null = frisch sortieren
+
+function renderInventory(){
+  const cats = ['Kühlschrank','Vorrat'];
+  const catIcon = {Kühlschrank:ICONS.fridge, Vorrat:ICONS.pantry};
+  const list = document.getElementById('inventoryList');
+  const newCache = {};
+  list.innerHTML = cats.map(cat=>{
+    const items = state.inventory.filter(i=>i.category===cat);
+    const order = inventoryOrderCache && inventoryOrderCache[cat];
+    if(order){
+      items.sort((a,b)=>{
+        const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
+        if(ia===-1 && ib===-1) return a.expiry-b.expiry;
+        if(ia===-1) return 1;   // neue Artikel hinten anhängen
+        if(ib===-1) return -1;
+        return ia-ib;
+      });
+    } else {
+      items.sort((a,b)=>a.expiry-b.expiry);
+    }
+    newCache[cat] = items.map(i=>i.id);
+    if(!items.length) return '';
+    return `
+      <div class="cat-block">
+        <div class="cat-head"><h3>${cat}</h3><span class="pill">${items.length} Artikel</span></div>
+        ${items.map(i=>{
+          const days = daysUntil(i.expiry);
+          const dotColor = days<=2 ? 'var(--danger)' : days<=6 ? 'var(--warning)' : 'var(--success)';
+          const expiryField = editingExpiryId === i.id
+            ? `<input type="date" value="${toISODate(i.expiry)}" data-expiry-input="${i.id}" onchange="saveExpiry(${i.id}, this.value)" onblur="cancelEditExpiry(${i.id})" autofocus style="font-size:12.5px;padding:2px 6px;border:1px solid var(--border);border-radius:6px;font-family:inherit;"/>`
+            : `<span onclick="editExpiry(${i.id})" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">haltbar bis ${fmtDate(i.expiry)}</span>`;
+          return `
+          <div class="item-row">
+            <span class="item-dot" style="background:${dotColor}"></span>
+            <div class="info"><strong>${i.name}</strong>${expiryField}</div>
+            ${expiryBadge(i.expiry)}
+            <button onclick="removeItem(${i.id})" style="border:none;background:none;color:var(--text-muted);cursor:pointer;padding:10px;margin:-10px -6px -10px 0;font-size:15px;">✕</button>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }).join('') || `<div class="empty">Noch nichts im Bestand.<br>Tipp oben auf „Foto hinzufügen“ – ein Foto vom Kühlschrank oder Kassenzettel reicht.</div>`;
+  inventoryOrderCache = newCache;
+}
+
+function editExpiry(id){
+  editingExpiryId = id;
+  renderInventory();
+  const input = document.querySelector(`[data-expiry-input="${id}"]`);
+  if(input) input.focus();
+}
+
+function cancelEditExpiry(id){
+  // Kurze Verzögerung, damit ein vorher ausgelöstes "onchange" (Datum gewählt) zuerst
+  // durchlaufen kann, bevor wir das Editierfeld wieder schließen.
+  setTimeout(()=>{
+    if(editingExpiryId === id){ editingExpiryId = null; renderInventory(); }
+  }, 150);
+}
+
+function saveExpiry(id, value){
+  const item = state.inventory.find(i=>i.id===id);
+  if(!item || !value) return;
+  const d = new Date(value + 'T00:00:00');
+  if(isNaN(d.getTime())) return;
+  item.expiry = d;
+  editingExpiryId = null;
+  renderAll();
+  toast(`Haltbarkeit von „${item.name}“ aktualisiert`);
+}
+
+/* ---------------- Artikel von Hand eintragen ----------------
+   Nicht alles kommt per Foto in den Bestand - manchmal will man einfach schnell
+   etwas eintippen. Die Haltbarkeit wird dabei anhand des Namens grob vorgeschlagen
+   (einfache Stichwort-Tabelle, kein KI-Aufruf: sofort da, funktioniert auch offline)
+   und lässt sich vor dem Speichern und später jederzeit ändern. */
+const SHELF_LIFE_HINTS = [
+  { days:3,   words:['salat','beere','erdbeer','himbeer','banane','pilz','champignon','spinat','rucola','kräuter','petersilie','basilikum'] },
+  { days:5,   words:['fisch','lachs','hack','geflügel','hähnchen','pute','fleisch','wurst','aufschnitt','brot','brötchen','sahne','frischkäse'] },
+  { days:8,   words:['milch','joghurt','quark','skyr','buttermilch','tofu','tomate','gurke','paprika','zucchini','brokkoli','avocado','trauben'] },
+  { days:14,  words:['käse','butter','margarine','apfel','birne','orange','zitrone','karotte','möhre','kohl','lauch','sellerie','hummus'] },
+  { days:21,  words:['ei','eier'] },
+  { days:60,  words:['kartoffel','zwiebel','knoblauch','kürbis','ingwer'] },
+  { days:180, words:['mehl','zucker','haferflocken','müsli','nudel','pasta','couscous','brühe','gewürz','backpulver','schokolade','keks','chips','nuss','mandel'] },
+  { days:365, words:['reis','linsen','bohnen','kichererbsen','quinoa','öl','essig','honig','marmelade','sirup','tee','kaffee','saft','wasser','cola','limo','pepsi'] },
+  { days:540, words:['dose','konserve','eingelegt','tiefkühl','tk','gefrier'] },
+];
+
+// Kurze Stichwörter (z.B. "ei") dürfen NICHT einfach als Teilstring gesucht werden -
+// sonst wird aus "Reis" ein Ei-Treffer (r-EI-s) und die Schätzung ist völlig daneben.
+// Deshalb: kurze Wörter nur als ganzes Wort oder als Wortende (deutsche Komposita wie
+// "Hühnerei" oder "Olivenöl"), längere Stichwörter ganz normal als Teilstring.
+function shelfWordMatches(normalizedName, word){
+  if(word.length > 3) return normalizedName.includes(word);
+  return normalizedName.split(/\s+/).some(part => part === word || part.endsWith(word));
+}
+
+function estimateShelfLife(name){
+  const n = normName(name);
+  if(!n) return 7;
+  for(const group of SHELF_LIFE_HINTS){
+    if(group.words.some(w => shelfWordMatches(n, w))) return group.days;
+  }
+  return 7;   // neutraler Standard, wenn nichts passt
+}
+
+function openManualAddSheet(){
+  window._manualCategory = 'Kühlschrank';
+  const content = document.getElementById('manualAddSheetContent');
+  content.innerHTML = `
+    <h2>Artikel hinzufügen</h2>
+    <p class="subtle" style="margin-bottom:14px;">Was hast du zuhause? Ein Wort reicht – z.&nbsp;B. „Eier“ oder „Milch“.</p>
+
+    <input id="manualNameInput" type="text" maxlength="60" placeholder="z.B. Eier"
+           oninput="updateManualEstimate()"
+           onkeydown="if(event.key==='Enter'){event.preventDefault();submitManualItem();}"
+           style="width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--border);border-radius:var(--radius-md);font-family:inherit;font-size:15px;background:var(--surface);" />
+
+    <div class="section-title" style="margin:16px 0 8px;">Wo liegt es?</div>
+    <div class="filter-row" style="margin-bottom:4px;">
+      <button class="chip active" id="manualCatKuehl" onclick="setManualCategory('Kühlschrank')">Kühlschrank</button>
+      <button class="chip" id="manualCatVorrat" onclick="setManualCategory('Vorrat')">Vorrat</button>
+    </div>
+
+    <div class="section-title" style="margin:16px 0 8px;">Haltbar bis</div>
+    <input id="manualDateInput" type="date" value="${toISODate(todayOffset(7))}"
+           onchange="this.dataset.touched='1'; document.getElementById('manualHint').textContent='Eigenes Datum gesetzt.';"
+           style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-family:inherit;font-size:15px;background:var(--surface);" />
+    <p class="subtle" id="manualHint" style="font-size:11.5px;margin:6px 0 0;">Wird automatisch geschätzt – du kannst das Datum einfach ändern.</p>
+
+    <button class="btn btn-primary" style="margin-top:18px;" onclick="submitManualItem()">Zum Bestand hinzufügen</button>
+    <button class="btn btn-outline" onclick="closeSheet('manualAddOverlay')">Abbrechen</button>
+  `;
+  document.getElementById('manualAddOverlay').classList.add('open');
+  setTimeout(()=>{ const el = document.getElementById('manualNameInput'); if(el) el.focus(); }, 80);
+}
+
+function setManualCategory(cat){
+  window._manualCategory = cat;
+  const k = document.getElementById('manualCatKuehl');
+  const v = document.getElementById('manualCatVorrat');
+  if(k) k.classList.toggle('active', cat==='Kühlschrank');
+  if(v) v.classList.toggle('active', cat==='Vorrat');
+  updateManualEstimate();
+}
+
+// Schlägt beim Tippen ein passendes Haltbarkeitsdatum vor - aber nur, solange der
+// Nutzer das Datum nicht selbst angefasst hat.
+function updateManualEstimate(){
+  const nameEl = document.getElementById('manualNameInput');
+  const dateEl = document.getElementById('manualDateInput');
+  if(!nameEl || !dateEl || dateEl.dataset.touched === '1') return;
+  const days = estimateShelfLife(nameEl.value);
+  dateEl.value = toISODate(todayOffset(days));
+}
+
+function submitManualItem(){
+  const nameEl = document.getElementById('manualNameInput');
+  const dateEl = document.getElementById('manualDateInput');
+  const name = nameEl ? nameEl.value.trim().replace(/\s+/g,' ') : '';
+  if(!name){ toast('Schreib kurz auf, was du hinzufügen willst'); return; }
+
+  let expiry = todayOffset(estimateShelfLife(name));
+  if(dateEl && dateEl.value){
+    const d = new Date(dateEl.value + 'T00:00:00');
+    if(!isNaN(d.getTime())) expiry = d;
+  }
+
+  const res = addToInventory(name, window._manualCategory || 'Kühlschrank', expiry);
+  closeSheet('manualAddOverlay');
+  inventoryOrderCache = null;   // neuer Artikel soll gleich einsortiert werden
+  switchView('bestand');
+  toast(res && res.status === 'updated'
+    ? `„${res.item.name}“ war schon da – Haltbarkeit aufgefrischt`
+    : `„${name}“ zum Bestand hinzugefügt`);
+}
+
+/* ---------------- Photo capture (echte KI-Erkennung via Netlify Function + Gemini) ---------------- */
+// "Sonstiges" statt früher "Vorratskammer" - nicht jeder hat eine Vorratskammer,
+// die Formulierung soll niemanden ausschließen. Deckt Schrank, Regal, Schublade etc. ab.
+const PHOTO_TYPES = ['Kassenzettel', 'Kühlschrank', 'Sonstiges'];
+
+let pendingPhoto = { type:null, dataUrl:null };
+
+function openPhotoSheet(){
+  pendingPhoto = { type:null, dataUrl:null };
+  const content = document.getElementById('photoSheetContent');
+  content.innerHTML = `
+    <h2>Foto hinzufügen</h2>
+    <p class="subtle" style="margin-bottom:16px;">Wähle zuerst, was du fotografieren möchtest.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      ${PHOTO_TYPES.map(type=>`
+        <button class="btn btn-outline" style="display:flex;align-items:center;gap:10px;text-align:left;" onclick="selectPhotoType('${type}')">
+          <span style="width:22px;height:22px;color:var(--primary)">${type==='Kassenzettel'?ICONS.receipt:type==='Kühlschrank'?ICONS.fridge:ICONS.pantry}</span>
+          ${type}
+        </button>`).join('')}
+    </div>
+  `;
+  document.getElementById('photoOverlay').classList.add('open');
+}
+
+function selectPhotoType(type){
+  pendingPhoto.type = type;
+  pendingPhoto.dataUrl = null;
+  const content = document.getElementById('photoSheetContent');
+  content.innerHTML = `
+    <h2>${type}: Foto auswählen</h2>
+    <p class="subtle" style="margin-bottom:14px;">Ohne ausgewähltes Foto geht es hier nicht weiter.</p>
+    <label id="uploadDrop" style="display:flex;flex-direction:column;align-items:center;gap:8px;border:2px dashed var(--primary-light);border-radius:var(--radius-md);padding:28px 16px;cursor:pointer;background:var(--surface-alt);color:var(--primary-dark);">
+      <span style="width:28px;height:28px;">${ICONS.camera}</span>
+      <strong style="font-size:13.5px;">Foto aufnehmen oder auswählen</strong>
+      <span style="font-size:11.5px;color:var(--text-muted)">Kamera oder Fotomediathek</span>
+      <input id="photoFileInput" type="file" accept="image/*" capture="environment" style="display:none" onchange="onPhotoFileChosen(event)" />
+    </label>
+    <div id="photoPreviewArea" style="margin-top:14px;"></div>
+    <button class="btn btn-primary" id="analyzeBtn" style="margin-top:16px;" disabled onclick="recognizePhoto()">Zutaten erkennen</button>
+    <button class="btn btn-outline" onclick="openPhotoSheet()">Zurück</button>
+  `;
+}
+
+/* Verkleinert das Foto, BEVOR es zur KI geht. Ein Handyfoto hat schnell 3-8 MB -
+   das dauert beim Hochladen ewig, kostet unnötig viel KI-Kontingent und läuft
+   öfter in Zeitüberschreitungen oder Größenlimits. Für die Erkennung von
+   Lebensmitteln und Kassenzetteln reicht die lange Kante von 1400 Pixeln locker.
+   Bleibt die Bildqualität für Kassenzettel-Text dabei gut? Ja - 1400px ist mehr
+   als genug, um Bon-Zeilen zu lesen. */
+const PHOTO_MAX_EDGE = 1400;
+const PHOTO_QUALITY = 0.82;
+
+function shrinkImage(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Foto konnte nicht gelesen werden'));
+    reader.onload = e => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Foto konnte nicht geöffnet werden'));
+      img.onload = () => {
+        try{
+          const scale = Math.min(1, PHOTO_MAX_EDGE / Math.max(img.width, img.height));
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const dataUrl = canvas.toDataURL('image/jpeg', PHOTO_QUALITY);
+          resolve({ dataUrl, mimeType:'image/jpeg', width:w, height:h, originalBytes: e.target.result.length });
+        }catch(err){
+          // Falls das Verkleinern scheitert (sehr seltene Browser-Eigenheiten),
+          // lieber das Originalbild nehmen als gar nichts.
+          resolve({ dataUrl: e.target.result, mimeType: file.type || 'image/jpeg', width:0, height:0, originalBytes: e.target.result.length });
+        }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function onPhotoFileChosen(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const area = document.getElementById('photoPreviewArea');
+  if(area) area.innerHTML = `<p class="subtle" style="margin:0;">Foto wird vorbereitet …</p>`;
+
+  let shrunk;
+  try{
+    shrunk = await shrinkImage(file);
+  }catch(err){
+    if(area) area.innerHTML = `<p class="subtle" style="margin:0;color:var(--danger);">${escapeHtml(err.message)}</p>`;
+    return;
+  }
+
+  pendingPhoto.dataUrl = shrunk.dataUrl;
+  pendingPhoto.mimeType = shrunk.mimeType;
+
+  const kb = Math.round(shrunk.dataUrl.length * 0.75 / 1024);   // base64 -> ca. Bytes
+  if(area){
+    area.innerHTML = `
+      <img src="${pendingPhoto.dataUrl}" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--border);" />
+      <div style="font-size:11.5px;color:var(--text-muted);margin-top:6px;">${escapeHtml(file.name)} · ${kb} KB</div>
+    `;
+  }
+  const btn = document.getElementById('analyzeBtn');
+  if(btn) btn.disabled = false;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Alles, was die KI über die Person wissen soll: Antworten aus der Personalisierung
+// plus die in den Einstellungen angehakten Küchengeräte.
+function aiContext(){
+  return { ...state.personalization, appliances: state.appliances };
+}
+
+/* ---------------- KI-Funktionen aufrufen ----------------
+   Dieselbe index.html soll auf BEIDEN Hostern laufen: Vercel erwartet die Funktionen
+   unter /api/..., Netlify unter /.netlify/functions/.... Beim ersten Aufruf probieren
+   wir /api/ und merken uns, ob das geklappt hat; kommt dort ein 404, schalten wir
+   dauerhaft auf den Netlify-Pfad um. Ein 404 kostet nichts und passiert nur einmal.
+   Vorteil: eine einzige Datei für beide Plattformen, kein Auseinanderlaufen. */
+let apiStyle = null;   // null = noch unbekannt, 'vercel' oder 'netlify'
+
+function apiUrl(name, style){
+  return style === 'netlify' ? `/.netlify/functions/${name}` : `/api/${name}`;
+}
+
+// Ruft eine KI-Funktion auf und parst die Antwort robust. Falls die Antwort kein JSON
+// ist, sondern eine HTML-Fehlerseite des Hosters, geben wir eine verständliche Meldung
+// statt eines kryptischen "Unexpected token '<'"-Parserfehlers zurück.
+async function callFunction(name, body, { timeoutMs = 28000 } = {}){
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  let resp, rawText;
+  const payload = JSON.stringify(body);
+
+  const doFetch = (style) => fetch(apiUrl(name, style), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: payload,
+    signal: controller.signal,
+  });
+
+  try{
+    resp = await doFetch(apiStyle || 'vercel');
+    // Beim allerersten Mal: 404 unter /api/ bedeutet, wir laufen auf Netlify.
+    if(resp.status === 404 && apiStyle === null){
+      resp = await doFetch('netlify');
+      if(resp.status !== 404) apiStyle = 'netlify';
+    } else if(apiStyle === null && resp.status !== 404){
+      apiStyle = 'vercel';
+    }
+    rawText = await resp.text();
+  }catch(err){
+    clearTimeout(timer);
+    if(err && err.name === 'AbortError'){
+      return { ok:false, message: 'Die KI-Anfrage hat zu lange gedauert (Zeitüberschreitung) und wurde abgebrochen. Bitte nochmal versuchen.' };
+    }
+    return { ok:false, message: `Keine Verbindung zur KI-Funktion.<br><br><span style="font-size:11px;opacity:.8;">Details: ${escapeHtml(err && err.message || err)}</span>` };
+  }
+  clearTimeout(timer);
+
+  let data;
+  try{
+    data = JSON.parse(rawText);
+  }catch(e){
+    // Keine gültige JSON-Antwort - typischerweise eine Netlify-Fehlerseite (HTML),
+    // z.B. bei einer Zeitüberschreitung der Funktion oder wenn sie nicht gefunden wurde.
+    const hint = resp.status === 404
+      ? ' Die KI-Funktion wurde nicht gefunden - eventuell läuft gerade noch ein Deploy oder er ist nicht vollständig hochgeladen.'
+      : ' Das passiert z.B. bei einer Zeitüberschreitung der KI-Anfrage.';
+    return { ok:false, message: `Der Server hat keine gültige Antwort geliefert (HTTP ${resp.status}).${hint}<br><br><span style="font-size:11px;opacity:.8;word-break:break-word;">Rohantwort: ${escapeHtml(rawText.slice(0,200))}</span>` };
+  }
+
+  if(!resp.ok){
+    const base = data.error || 'Die KI-Anfrage ist fehlgeschlagen.';
+    const withDetails = data.details ? `${base}<br><br><span style="font-size:11px;opacity:.8;word-break:break-word;">Details: ${escapeHtml(String(data.details).slice(0,300))}</span>` : base;
+    return { ok:false, message: withDetails };
+  }
+
+  return { ok:true, data };
+}
+
+async function recognizePhoto(){
+  if(!pendingPhoto.dataUrl) return;
+  const type = pendingPhoto.type;
+  const content = document.getElementById('photoSheetContent');
+  content.innerHTML = `
+    <h2>Erkenne Zutaten…</h2>
+    <img src="${pendingPhoto.dataUrl}" style="width:100%;max-height:160px;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--border);margin-bottom:12px;" />
+    <p class="subtle">Dein Foto wird von der KI ausgewertet – das kann ein paar Sekunden dauern.</p>
+    <div class="spinner"></div>
+  `;
+
+  const base64 = pendingPhoto.dataUrl.split(',')[1];
+  const result = await callFunction('recognize', { imageBase64: base64, mimeType: pendingPhoto.mimeType || 'image/jpeg', type });
+  if(!result.ok){ showRecognitionError(result.message); return; }
+  showRecognitionReview(type, result.data.items || [], result.data.debug);
+}
+
+function showRecognitionError(message){
+  const content = document.getElementById('photoSheetContent');
+  content.innerHTML = `
+    <h2>Das hat nicht geklappt</h2>
+    <div class="card" style="background:var(--danger-bg);border-color:#fecaca;margin-bottom:14px;">
+      <p style="margin:0;font-size:12.5px;color:var(--danger);">${message}</p>
+    </div>
+    <button class="btn btn-primary" onclick="selectPhotoType('${pendingPhoto.type}')">Nochmal versuchen</button>
+    <button class="btn btn-outline" onclick="closeSheet('photoOverlay')">Abbrechen</button>
+  `;
+}
+
+function showRecognitionReview(type, items, debug){
+  const content = document.getElementById('photoSheetContent');
+  const category = type==='Sonstiges' ? 'Vorrat' : (type==='Kühlschrank' ? 'Kühlschrank' : 'Kühlschrank');
+  // debug (finishReason etc.) kommt weiterhin vom Server mit, falls mal wieder genauer
+  // untersucht werden muss, warum nichts erkannt wurde - wird aber nicht mehr in der
+  // normalen Ansicht angezeigt, da das nur Entwickler-Diagnoseinfo ist.
+  if(!items.length && debug) console.warn('Foto-Erkennung leer:', debug);
+  content.innerHTML = `
+    <h2>Erkannt ✓</h2>
+    <img src="${pendingPhoto.dataUrl}" style="width:100%;max-height:130px;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--border);margin-bottom:12px;" />
+    <p class="subtle">Bitte kurz prüfen, korrigieren und bestätigen.</p>
+    <div id="reviewList">
+      ${items.length ? items.map((it,idx)=>`
+        <div class="review-item" data-est-days="${it.estDays}">
+          <div class="checkbox checked" data-idx="${idx}" onclick="this.classList.toggle('checked')">${ICONS.check}</div>
+          <input type="text" value="${it.name}" data-name-idx="${idx}"/>
+        </div>`).join('') : `<p class="subtle">Es konnte nichts eindeutig erkannt werden. Du kannst unten trotzdem manuell etwas hinzufügen.</p>
+        <div class="review-item" data-est-days="10">
+          <div class="checkbox checked" data-idx="0" onclick="this.classList.toggle('checked')">${ICONS.check}</div>
+          <input type="text" value="" placeholder="Artikel eingeben" data-name-idx="0"/>
+        </div>`}
+    </div>
+    <p class="subtle" style="font-size:11px;margin-top:6px;">Die Haltbarkeit wird automatisch grob geschätzt – du kannst sie danach im Bestand jederzeit antippen und korrigieren.</p>
+    <button class="btn btn-primary" style="margin-top:12px;" onclick='confirmRecognition(${JSON.stringify(category)})'>Zum Bestand hinzufügen</button>
+    <button class="btn btn-outline" onclick="closeSheet('photoOverlay')">Abbrechen</button>
+  `;
+}
+
+function confirmRecognition(category){
+  const rows = document.querySelectorAll('#reviewList .review-item');
+  let added = 0, updated = 0;
+  rows.forEach(row=>{
+    const checked = row.querySelector('.checkbox').classList.contains('checked');
+    const name = row.querySelector('input').value.trim();
+    if(checked && name){
+      const estDays = parseInt(row.dataset.estDays, 10) || 10;
+      // Über addToInventory(), damit nichts doppelt im Bestand landet, wenn man
+      // z.B. denselben Kassenzettel zweimal fotografiert.
+      const res = addToInventory(name, category, todayOffset(estDays));
+      if(res && res.status === 'added') added++;
+      else if(res) updated++;
+    }
+  });
+  closeSheet('photoOverlay');
+  inventoryOrderCache = null;
+  renderAll();
+  const parts = [];
+  if(added) parts.push(`${added} ${added===1?'Artikel':'Artikel'} hinzugefügt`);
+  if(updated) parts.push(`${updated} schon vorhanden – Haltbarkeit aufgefrischt`);
+  toast(parts.length ? parts.join(', ') : 'Nichts ausgewählt');
+}
+
+/* ---------------- Recipes ---------------- */
+/* Die Filter-Chips über der Rezeptliste sind NICHT mehr fest eingebaut. Früher standen
+   dort immer "Vegan / Vegetarisch / < 25 Min" - das war noch Theos persönliche Vorliebe
+   aus der Prototyp-Zeit und passte für alle anderen nicht. Jetzt erscheinen nur die
+   Filter, die sich aus der Personalisierung tatsächlich ergeben; hat jemand nichts
+   angegeben, gibt es gar keine Filterleiste. */
+const ALL_FILTERS = [
+  {key:'vegan', label:'Vegan'},
+  {key:'vegetarisch', label:'Vegetarisch'},
+  {key:'fast', label:'< 25 Min'},
+  {key:'proteinreich', label:'Proteinreich'},
+];
+
+function availableFilters(){
+  const p = state.personalization;
+  const diet = p.dietType || [];
+  const focus = p.dietFocus || [];
+  const keys = [];
+  if(diet.includes('Vegan')) keys.push('vegan');
+  if(diet.includes('Vegetarisch')) keys.push('vegetarisch');
+  if(p.cookTime === '< 15 Minuten' || p.cookTime === '15–30 Minuten') keys.push('fast');
+  if(focus.includes('Proteinreich')) keys.push('proteinreich');
+  return ALL_FILTERS.filter(f=>keys.includes(f.key));
+}
+
+function renderFilters(){
+  const row = document.getElementById('filterRow');
+  const filters = availableFilters();
+  row.style.display = filters.length ? 'flex' : 'none';
+  row.innerHTML = filters.map(f=>`
+    <button class="chip ${state.filters[f.key]?'active':''}" onclick="toggleFilter('${f.key}')">${f.label}</button>
+  `).join('');
+}
+function toggleFilter(key){
+  state.filters[key] = !state.filters[key];
+  renderFilters();
+  renderRecipes();
+  saveState();
+}
+
+/* ---------------- Toleranter Zutaten-Abgleich ----------------
+   Früher wurden Zutaten nur bei EXAKT gleichem Namen erkannt - "Eier (6er)" im
+   Bestand zählte nicht als "Eier" im Rezept. Jetzt wird normalisiert verglichen
+   (Kleinschreibung, Klammern-Zusätze weg) und auch erkannt, wenn ein Name im
+   anderen enthalten ist (z.B. "Rote Linsen" deckt "Linsen" ab). */
+function normName(s){
+  return String(s||'').toLowerCase()
+    .replace(/\(.*?\)/g,' ')          // Klammer-Zusätze wie "(6er)" oder "(Dose)" entfernen
+    .replace(/[^a-zäöüß\s-]/g,' ')    // Zahlen/Sonderzeichen raus
+    .replace(/\s+/g,' ').trim();
+}
+/* Zusammengesetzte Wörter, bei denen das Grundwort NICHT dasselbe Produkt meint:
+   Kokosmilch ist keine Milch, Erdnussbutter keine Butter, Frischkäse kein Käse.
+   Für diese Grundwörter wird die Endungs-Regel unten nicht angewendet. */
+const COMPOUND_TRAPS = ['milch','butter','sahne','käse','salz','zucker','creme','wasser','saft'];
+
+function namesMatch(a,b){
+  const na = normName(a), nb = normName(b);
+  if(!na || !nb) return false;
+  if(na === nb) return true;
+
+  const shorter = na.length <= nb.length ? na : nb;
+  const longer  = na.length <= nb.length ? nb : na;
+  const shortWords = shorter.split(' ').filter(Boolean);
+  const longWords  = longer.split(' ').filter(Boolean);
+
+  // 1) Wort-Ebene: Alle Wörter des kürzeren Namens kommen im längeren als eigene
+  //    Wörter vor. Deckt "Eier" <-> "Eier (6er)" und "Linsen" <-> "Rote Linsen" ab.
+  if(shortWords.every(w => longWords.includes(w))) return true;
+
+  // 2) Deutsche Komposita: "Vollkornnudeln" ist Nudeln, "Naturjoghurt" ist Joghurt.
+  //    Nur bei einem einzelnen Grundwort ab 6 Zeichen und nur, wenn es keine der
+  //    obigen Fallen ist - früher galt sonst "Kokosmilch" als "Milch", wodurch die
+  //    App fälschlich meldete, man habe Milch da.
+  if(shortWords.length === 1 && longWords.length === 1){
+    const base = shortWords[0];
+    if(base.length >= 6 && !COMPOUND_TRAPS.includes(base) && longWords[0].endsWith(base)) return true;
+  }
+  return false;
+}
+function findInventoryItem(name){
+  return state.inventory.find(i => namesMatch(i.name, name)) || null;
+}
+function inventoryHas(name){
+  return Boolean(findInventoryItem(name));
+}
+
+// Merkt sich einen aufgebrauchten/entfernten Artikel als echten Nachkauf-Vorschlag.
+function addRestockSuggestion(label){
+  if(!label) return;
+  if(state.shopping.restock.some(i => namesMatch(i.label, label))) return;
+  const item = {id:'rs'+(++idCounter), label, checked:false, created: Date.now()};
+  state.shopping.restock.unshift(item);
+  state.shopping.restock = state.shopping.restock.slice(0, 8);   // Liste kurz halten
+  syncNewShoppingItemToBackend(item);   // offline-tauglich, siehe Funktionskommentar unten
+}
+
+/* Räumt die Nachkauf-Vorschläge auf. Zwei Gründe, warum ein Vorschlag verschwindet:
+   1. Der Artikel ist wieder im Bestand - dann hat man ihn offensichtlich nachgekauft
+      (egal ob per Foto, von Hand oder über die Einkaufsliste). Muss man nicht mehr
+      vorgeschlagen bekommen.
+   2. Der Vorschlag ist älter als 30 Tage - dann war er wohl doch nicht wichtig und
+      soll die Liste nicht ewig zumüllen. */
+const RESTOCK_MAX_AGE_DAYS = 30;
+
+function cleanupRestock(){
+  const maxAge = RESTOCK_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const before = state.shopping.restock.length;
+  state.shopping.restock = state.shopping.restock.filter(i => {
+    const wiederDa = inventoryHas(i.label);                          // wieder da
+    const zuAlt = Boolean(i.created && (now - i.created) > maxAge);  // zu alt
+    if((wiederDa || zuAlt) && i.dbId) syncCheckedShoppingItemToBackend(i.dbId);
+    return !wiederDa && !zuAlt;
+  });
+  return before !== state.shopping.restock.length;
+}
+
+/* Einzige Stelle, an der Artikel in den Bestand wandern - egal ob per Foto, von Hand
+   oder durch Abhaken auf der Einkaufsliste. Gibt es den Artikel schon (toleranter
+   Namensvergleich, also auch "Eier" vs. "Eier (6er)"), wird KEIN Duplikat angelegt,
+   sondern nur das Haltbarkeitsdatum aufgefrischt - frisch Gekauftes hält ja länger.
+   Verhindert genau das Doppeln, wenn man z.B. nach dem Einkauf nochmal den
+   Kassenzettel fotografiert. */
+function addToInventory(name, category, expiry){
+  const clean = String(name || '').trim().replace(/\s+/g,' ');
+  if(!clean) return null;
+  const existing = findInventoryItem(clean);
+  if(existing){
+    if(expiry > existing.expiry) existing.expiry = expiry;   // späteres Datum gewinnt
+    if(category) existing.category = category;
+    return { status:'updated', item: existing };
+  }
+  const item = { id: ++idCounter, name: clean, category: category || 'Kühlschrank', expiry };
+  state.inventory.push(item);
+  syncNewInventoryItemToBackend(item);   // offline-tauglich, siehe Funktionskommentar unten
+  return { status:'added', item };
+}
+
+// Grobe Einschätzung, wo ein neu gekaufter Artikel hingehört: kurz haltbar -> Kühlschrank.
+function guessCategory(name){
+  return estimateShelfLife(name) <= 14 ? 'Kühlschrank' : 'Vorrat';
+}
+
+function matchCount(recipe){
+  return recipe.needs.filter(n => inventoryHas(n)).length;
+}
+
+// Bewertet, wie gut ein Rezept zur Personalisierung passt (Ernährungsform/-fokus,
+// Zeitpräferenz, Lieblingszutaten) - fließt zusätzlich zum Bestand-Match in die
+// Sortierung der Rezeptliste ein, damit die Personalisierung wirklich etwas verändert.
+function personalizationScore(recipe){
+  const p = state.personalization;
+  let score = 0;
+  const tagsLower = recipe.tags.map(t=>t.toLowerCase());
+  [...(p.dietType||[]), ...(p.dietFocus||[])].forEach(pref=>{
+    if(tagsLower.includes(pref.toLowerCase())) score += 2;
+  });
+  if((p.cookTime === '< 15 Minuten' || p.cookTime === '15–30 Minuten') && tagsLower.includes('schnell')) score += 1;
+  if(p.favoriteIngredients){
+    const favLower = p.favoriteIngredients.toLowerCase();
+    recipe.needs.forEach(n=>{ if(favLower.includes(n.toLowerCase())) score += 1; });
+  }
+  return score;
+}
+
+function renderRecipes(){
+  let list = allRecipes().slice();
+  // Nur Filter anwenden, deren Chip gerade auch sichtbar ist - sonst könnte ein alter,
+  // nicht mehr angezeigter Filter die Liste unsichtbar leerfiltern.
+  const active = availableFilters().filter(f=>state.filters[f.key]).map(f=>f.key);
+  if(active.includes('vegan')) list = list.filter(r=>r.tags.includes('Vegan'));
+  if(active.includes('vegetarisch')) list = list.filter(r=>r.tags.includes('Vegan')||r.tags.includes('Vegetarisch'));
+  if(active.includes('fast')) list = list.filter(r=>r.time<=25);
+  if(active.includes('proteinreich')) list = list.filter(r=>r.tags.includes('Proteinreich'));
+  list.sort((a,b)=>(matchCount(b)+personalizationScore(b)) - (matchCount(a)+personalizationScore(a)));
+
+  const el = document.getElementById('recipeList');
+  el.innerHTML = list.map(r=>{
+    const m = matchCount(r);
+    const isFav = state.favorites.has(r.id);
+    return `
+    <div class="recipe-card" onclick="openRecipe('${r.id}')">
+      <div class="recipe-img">
+        ${ICONS.chef.replace('viewBox','width="34" height="34" viewBox')}
+        <div class="recipe-fav" onclick="event.stopPropagation(); toggleFavorite('${r.id}')" title="${isFav?'Aus Lieblingsgerichten entfernen':'Als Lieblingsgericht merken'}">${isFav?ICONS.heartFill.replace('currentColor','#dc2626'):ICONS.heart}</div>
+        ${r.isCustom?'<div style="position:absolute;top:8px;left:8px;background:var(--primary);color:#fff;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;">✨ Deine Idee</div>':''}
+      </div>
+      <div class="recipe-body">
+        <h4>${r.name}</h4>
+        <div class="tag-row">${r.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        <div class="meta-row">
+          <span>${ICONS.clock.replace('viewBox','width="13" height="13" viewBox')} ${r.time} Min</span>
+          <span>${ICONS.flame.replace('viewBox','width="13" height="13" viewBox')} ${r.kcal} kcal</span>
+          <span>${ICONS.drop.replace('viewBox','width="13" height="13" viewBox')} ${r.protein}g Protein</span>
+        </div>
+        <div class="match-note">${m}/${r.needs.length} Zutaten schon im Bestand</div>
+        ${r.missing.length? `<div class="missing-note">${r.missing.length} fehlen: ${r.missing.join(', ')}</div>`:''}
+      </div>
+    </div>`;
+  }).join('') || `<div class="empty">Keine Rezepte für diese Filter gefunden.</div>`;
+}
+
+function openRecipe(id){
+  const r = allRecipes().find(x=>x.id===id);
+  if(!r) return;
+  const have = r.needs.filter(n=>inventoryHas(n));
+  const missingAll = [...r.needs.filter(n=>!inventoryHas(n)), ...r.missing];
+  const isFav = state.favorites.has(r.id);
+  const content = document.getElementById('recipeSheetContent');
+  content.innerHTML = `
+    <div class="recipe-img" style="border-radius:14px;margin-bottom:14px;">${ICONS.chef.replace('viewBox','width="40" height="40" viewBox')}</div>
+    <h2>${r.name}</h2>
+    <div class="tag-row">${r.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+    <div class="meta-row" style="margin:10px 0 14px;">
+      <span>${ICONS.clock.replace('viewBox','width="14" height="14" viewBox')} ${r.time} Min</span>
+      <span>${ICONS.flame.replace('viewBox','width="14" height="14" viewBox')} ${r.kcal} kcal</span>
+      <span>${ICONS.drop.replace('viewBox','width="14" height="14" viewBox')} ${r.protein}g Protein</span>
+    </div>
+
+    <div class="section-title" style="margin-top:0">Zutaten</div>
+    <div class="card">
+      ${have.map(n=>`<div class="expiry-item"><span style="color:var(--success)">${ICONS.check.replace('viewBox','width="15" height="15" viewBox')}</span>&nbsp; ${n} <span style="margin-left:auto;color:var(--text-muted);font-size:11.5px;">im Bestand</span></div>`).join('')}
+      ${missingAll.map(n=>`<div class="expiry-item">${ICONS.cart.replace('viewBox','width="15" height="15" viewBox').replace('currentColor','#d97706')}&nbsp; ${n} <span style="margin-left:auto;color:var(--warning);font-size:11.5px;">fehlt</span></div>`).join('')}
+    </div>
+
+    <div class="section-title">So geht's, kurz gesagt</div>
+    <div class="card">
+      <p style="margin:0;font-size:13.5px;line-height:1.6;">${r.summary || `${r.steps.length} Schritte, ca. ${r.time} Minuten – die komplette Schritt-für-Schritt-Anleitung findest du auf der Rezeptkarte.`}</p>
+    </div>
+
+    <button class="btn btn-primary" style="margin-top:18px;" onclick="openRecipeCard('${r.id}')">🧾 Rezeptkarte öffnen</button>
+    <button class="btn btn-outline" onclick="addMissingToShopping('${r.id}')">Fehlende Zutaten zur Einkaufsliste</button>
+    <button class="btn btn-ghost" onclick="cookRecipe('${r.id}')">Fertig gekocht ✓ ${isFav?'(Favorit)':''}</button>
+    ${r.isCustom?`<button class="btn btn-ghost" style="color:var(--danger);" onclick="removeCustomRecipe('${r.id}')">Idee wieder entfernen</button>`:''}
+  `;
+  document.getElementById('recipeOverlay').classList.add('open');
+}
+
+/* Die schöne Rezeptkarte im Papier-Look: zeigt das Rezept ausführlich mit Mengen-
+   angaben, nummerierten Schritten und Tipp - wie ein liebevoll gestaltetes Rezeptblatt. */
+function openRecipeCard(id){
+  const r = allRecipes().find(x=>x.id===id);
+  if(!r) return;
+  const ingredients = (r.ingredients && r.ingredients.length) ? r.ingredients : [...r.needs, ...r.missing];
+  const content = document.getElementById('recipeCardContent');
+  content.innerHTML = `
+    <div class="paper">
+      <h2>${r.name}</h2>
+      <div class="paper-sub">${r.tags.join(' · ')}${r.portions ? ` · für ${r.portions} Portionen` : ''}</div>
+      <div class="paper-meta"><span>⏱ ${r.time} Min</span><span>🔥 ${r.kcal} kcal</span><span>💪 ${r.protein} g Protein</span></div>
+      <div class="paper-divider">❦</div>
+      <div class="paper-section">Zutaten</div>
+      <ul class="paper-ing">${ingredients.map(i=>`<li><span>${i}</span></li>`).join('')}</ul>
+      <div class="paper-section">Zubereitung</div>
+      <ol class="paper-steps">${r.steps.map(s=>`<li><span>${s}</span></li>`).join('')}</ol>
+      ${r.tip ? `<div class="paper-tip">💡 ${r.tip}</div>` : ''}
+    </div>`;
+  document.getElementById('recipeCardOverlay').classList.add('open');
+}
+
+function removeCustomRecipe(id){
+  state.customRecipes = state.customRecipes.filter(r=>r.id!==id);
+  closeSheet('recipeOverlay');
+  renderAll();
+  toast('Rezeptidee entfernt');
+}
+
+function addMissingToShopping(id){
+  const r = allRecipes().find(x=>x.id===id);
+  if(!r) return;
+  const missingAll = [...r.needs.filter(n=>!inventoryHas(n)), ...r.missing];
+  let added = 0;
+  missingAll.forEach(n=>{
+    if(!state.shopping.recipeItems.find(i=>namesMatch(i.label, n))){
+      state.shopping.recipeItems.push({id:'sr'+(++idCounter), label:n, checked:false, fromRecipe:r.name});
+      added++;
+    }
+  });
+  renderAll();
+  toast(added ? `${added} Zutaten zur Einkaufsliste hinzugefügt` : 'Schon auf der Liste');
+}
+
+/* Das Herz auf den Rezeptkarten ist jetzt ein echter Knopf: Antippen macht das Rezept
+   direkt zum Lieblingsgericht (bzw. entfernt es wieder), ohne das Rezept zu öffnen. */
+function toggleFavorite(id){
+  const r = allRecipes().find(x=>x.id===id);
+  if(!r) return;
+  if(state.favorites.has(id)){
+    state.favorites.delete(id);
+    renderAll();
+    toast(`„${r.name}“ ist kein Lieblingsgericht mehr`);
+  } else {
+    state.favorites.add(id);
+    renderAll();
+    toast(`❤ „${r.name}“ als Lieblingsgericht gemerkt`);
+  }
+}
+
+/* Kochen zieht jetzt Zutaten vom Bestand ab: Nach "Fertig gekocht" kommt eine ganz
+   einfache Frage ("Was davon ist jetzt leer?") mit den benutzten Bestand-Zutaten zum
+   Antippen. Angetippte Artikel verschwinden aus dem Bestand und tauchen automatisch
+   als Nachkauf-Vorschlag auf der Einkaufsliste auf - so hält sich die App von selbst
+   aktuell, ohne dass man etwas tippen muss. */
+function cookRecipe(id){
+  state.cookCounts[id] = (state.cookCounts[id]||0) + 1;
+  const wasNewFav = state.cookCounts[id] >= 2 && !state.favorites.has(id);
+  if(state.cookCounts[id] >= 2) state.favorites.add(id);
+
+  const r = allRecipes().find(x=>x.id===id);
+  const usedItems = r ? r.needs.map(n=>findInventoryItem(n)).filter(Boolean) : [];
+  // Doppelte Bestand-Artikel vermeiden (falls zwei Rezept-Zutaten denselben Artikel treffen)
+  const unique = [...new Map(usedItems.map(i=>[i.id, i])).values()];
+
+  if(!unique.length){
+    closeSheet('recipeOverlay');
+    renderAll();
+    toast(wasNewFav ? '❤ Als Lieblingsgericht gemerkt – wird jetzt öfter vorgeschlagen' : 'Schön, guten Appetit!');
+    return;
+  }
+
+  const content = document.getElementById('recipeSheetContent');
+  content.innerHTML = `
+    <h2>Guten Appetit! 🍽</h2>
+    ${wasNewFav ? '<p class="subtle" style="margin:6px 0 0;">❤ Als Lieblingsgericht gemerkt – wird jetzt öfter vorgeschlagen.</p>' : ''}
+    <p class="subtle" style="margin:10px 0 14px;">Ist davon jetzt etwas leer? Einfach antippen – das wird dann aus deinem Bestand genommen und auf die Einkaufsliste gesetzt.</p>
+    <div class="card" id="usedUpList" style="margin-bottom:14px;">
+      ${unique.map(i=>`
+        <div class="review-item" onclick="this.querySelector('.checkbox').classList.toggle('checked')" style="cursor:pointer;" data-used-id="${i.id}">
+          <div class="checkbox">${ICONS.check}</div>
+          <div class="info" style="flex:1">${i.name}</div>
+        </div>`).join('')}
+    </div>
+    <button class="btn btn-primary" onclick="confirmUsedUp()">Fertig</button>
+    <button class="btn btn-outline" onclick="skipUsedUp()">Nichts ist leer</button>
+  `;
+}
+
+function confirmUsedUp(){
+  const rows = document.querySelectorAll('#usedUpList .review-item');
+  let removed = 0;
+  rows.forEach(row=>{
+    if(row.querySelector('.checkbox').classList.contains('checked')){
+      const itemId = parseInt(row.dataset.usedId, 10);
+      const item = state.inventory.find(i=>i.id===itemId);
+      if(item){
+        state.inventory = state.inventory.filter(i=>i.id!==itemId);
+        addRestockSuggestion(item.name);
+        removed++;
+      }
+    }
+  });
+  closeSheet('recipeOverlay');
+  renderAll();
+  toast(removed ? `${removed} Artikel aus dem Bestand genommen und auf die Einkaufsliste gesetzt` : 'Schön, guten Appetit!');
+}
+
+function skipUsedUp(){
+  closeSheet('recipeOverlay');
+  renderAll();
+  toast('Schön, guten Appetit!');
+}
+
+/* ---------------- Eigene Rezeptidee (KI) ---------------- */
+function openIdeaSheet(){
+  const content = document.getElementById('ideaSheetContent');
+  content.innerHTML = `
+    <h2>Eigene Rezeptidee</h2>
+    <p class="subtle" style="margin-bottom:14px;">Worauf hast du Lust? Die KI erstellt dir daraus ein Rezept – möglichst mit dem, was du gerade zuhause hast.</p>
+    <textarea id="ideaInput" rows="3" placeholder="z.B. „etwas Cremiges mit Pasta“ oder „scharfe asiatische Bowl“" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--border);border-radius:var(--radius-md);font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+    <button class="btn btn-primary" style="margin-top:14px;" onclick="submitIdea()">Rezept erstellen</button>
+    <button class="btn btn-outline" onclick="closeSheet('ideaOverlay')">Abbrechen</button>
+  `;
+  document.getElementById('ideaOverlay').classList.add('open');
+  setTimeout(()=>{ const el = document.getElementById('ideaInput'); if(el) el.focus(); }, 50);
+}
+
+async function submitIdea(){
+  const input = document.getElementById('ideaInput');
+  const idea = input ? input.value.trim() : '';
+  if(!idea){ toast('Schreib kurz auf, worauf du Lust hast'); return; }
+
+  const content = document.getElementById('ideaSheetContent');
+  content.innerHTML = `
+    <h2>Rezept wird erstellt…</h2>
+    <p class="subtle">Die KI überlegt sich gerade etwas Passendes für „${idea}“ – das kann ein paar Sekunden dauern.</p>
+    <div class="spinner"></div>
+  `;
+
+  const result = await callFunction('generateRecipe', { idea, inventory: state.inventory.map(i=>i.name), personalization: aiContext() });
+  if(!result.ok){ showIdeaError(result.message); return; }
+  addGeneratedRecipe(result.data.recipe);
+}
+
+function showIdeaError(message){
+  const content = document.getElementById('ideaSheetContent');
+  content.innerHTML = `
+    <h2>Das hat nicht geklappt</h2>
+    <div class="card" style="background:var(--danger-bg);border-color:#fecaca;margin-bottom:14px;">
+      <p style="margin:0;font-size:12.5px;color:var(--danger);">${message}</p>
+    </div>
+    <button class="btn btn-primary" onclick="openIdeaSheet()">Nochmal versuchen</button>
+    <button class="btn btn-outline" onclick="closeSheet('ideaOverlay')">Abbrechen</button>
+  `;
+}
+
+function addGeneratedRecipe(recipe){
+  const id = 'ai'+(++idCounter);
+  const needs = [...recipe.ingredientsHave, ...recipe.ingredientsMissing];
+  state.customRecipes.push({
+    id, name: recipe.name, tags: recipe.tags, time: recipe.time, kcal: recipe.kcal, protein: recipe.protein,
+    needs, missing: [], steps: recipe.steps, isCustom: true,
+    ingredients: needs, tip: recipe.tip || '', portions: recipe.portions || 2, summary: recipe.summary || '',
+  });
+  closeSheet('ideaOverlay');
+  switchView('rezepte');
+  renderAll();
+  openRecipe(id);
+  toast('✨ Neues Rezept erstellt');
+}
+
+/* ---------------- Shopping ---------------- */
+function addFavoritesToShopping(){
+  const favs = allRecipes().filter(r=>state.favorites.has(r.id));
+  if(!favs.length){ toast('Noch keine Lieblingsgerichte gemerkt'); return; }
+  let added = 0;
+  favs.forEach(r=>{
+    const missingAll = [...r.needs.filter(n=>!inventoryHas(n)), ...r.missing];
+    missingAll.forEach(n=>{
+      if(!state.shopping.recipeItems.find(i=>namesMatch(i.label, n))){
+        state.shopping.recipeItems.push({id:'sr'+(++idCounter), label:n, checked:false, fromRecipe:r.name});
+        added++;
+      }
+    });
+  });
+  renderAll();
+  toast(added ? `${added} Zutaten für deine Lieblingsgerichte ergänzt` : 'Für deine Lieblingsgerichte ist schon alles auf der Liste');
+}
+
+/* Abhaken heißt jetzt "gekauft": Der Artikel wandert direkt in den Bestand (mit
+   geschätzter Haltbarkeit und passendem Ort) und verschwindet von der Einkaufsliste.
+   Dank addToInventory() entsteht dabei kein Duplikat, falls man ihn danach noch per
+   Kassenzettel-Foto erfasst. */
+function toggleShopItem(listKey, id){
+  const list = state.shopping[listKey];
+  const item = list.find(i=>i.id===id);
+  if(!item) return;
+
+  const res = addToInventory(item.label, guessCategory(item.label), todayOffset(estimateShelfLife(item.label)));
+  state.shopping[listKey] = list.filter(i=>i.id!==id);
+  if(listKey === 'restock' && item.dbId) syncCheckedShoppingItemToBackend(item.dbId);
+  inventoryOrderCache = null;
+  renderAll();
+  toast(res && res.status === 'updated'
+    ? `„${item.label}“ war schon im Bestand – Haltbarkeit aufgefrischt`
+    : `„${item.label}“ ist jetzt im Bestand`);
+}
+
+function renderShopping(){
+  cleanupRestock();   // wieder Vorhandenes und alte Vorschläge rausnehmen
+
+  const recipeCard = document.getElementById('shopRecipeCard');
+  recipeCard.innerHTML = state.shopping.recipeItems.length ? state.shopping.recipeItems.map(i=>`
+    <div class="shop-item">
+      <div class="checkbox" onclick="toggleShopItem('recipeItems','${i.id}')"></div>
+      <div class="label" style="flex:1"><strong style="font-size:13.5px;">${escapeHtml(i.label)}</strong><div style="font-size:11px;color:var(--text-muted)">für ${escapeHtml(i.fromRecipe||'')}</div></div>
+    </div>`).join('') : `<div class="empty">Noch nichts hier. Öffne ein Rezept und füg fehlende Zutaten hinzu.</div>`;
+
+  const restockCard = document.getElementById('shopRestockCard');
+  restockCard.innerHTML = state.shopping.restock.length ? state.shopping.restock.map(i=>`
+    <div class="shop-item">
+      <div class="checkbox" onclick="toggleShopItem('restock','${i.id}')"></div>
+      <div class="label" style="flex:1"><strong style="font-size:13.5px;">${escapeHtml(i.label)}</strong><div style="font-size:11px;color:var(--text-muted)">war in deinem Bestand und ist aufgebraucht</div></div>
+    </div>`).join('') : `<div class="empty">Wenn etwas aus deinem Bestand aufgebraucht ist, taucht es hier automatisch zum Nachkaufen auf.</div>`;
+}
+
+/* ---------------- Notes (text / dictation) ---------------- */
+function openNoteSheet(){
+  const content = document.getElementById('noteSheetContent');
+  content.innerHTML = `
+    <h2>Schnellnotiz</h2>
+    <p class="subtle" style="margin-bottom:12px;">
+      Erzähl der App etwas, z.&nbsp;B. wie lange etwas noch haltbar ist oder was du gern isst.
+      Tipp: Auf dem iPhone kannst du im Textfeld das Mikro-Symbol deiner Tastatur zum Diktieren nutzen.
+    </p>
+    <textarea id="noteInput" rows="4" placeholder="z.B. „Der Joghurt ist noch 3 Tage haltbar“ oder „Ich mag am liebsten Linsen-Spinat-Curry“" style="width:100%;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px;font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+    <div class="filter-row" style="margin-top:12px;">
+      <button class="chip active" id="kindHaltbarkeit" onclick="setNoteKind('haltbarkeit')">Haltbarkeit / Bestand</button>
+      <button class="chip" id="kindVorlieben" onclick="setNoteKind('vorlieben')">Vorlieben / Rezept</button>
+    </div>
+    <button class="btn btn-primary" style="margin-top:16px;" onclick="submitNote()">Absenden</button>
+    <button class="btn btn-outline" onclick="closeSheet('noteOverlay')">Abbrechen</button>
+  `;
+  window._noteKind = 'haltbarkeit';
+  document.getElementById('noteOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('noteInput')?.focus(), 150);
+}
+
+function setNoteKind(kind){
+  window._noteKind = kind;
+  document.getElementById('kindHaltbarkeit').classList.toggle('active', kind==='haltbarkeit');
+  document.getElementById('kindVorlieben').classList.toggle('active', kind==='vorlieben');
+}
+
+async function submitNote(){
+  const textEl = document.getElementById('noteInput');
+  const text = textEl.value.trim();
+  if(!text) return;
+  const kind = window._noteKind || 'haltbarkeit';
+
+  const content = document.getElementById('noteSheetContent');
+  content.innerHTML = `
+    <h2>Notiz wird verstanden…</h2>
+    <p class="subtle">Die KI liest sich „${escapeHtml(text)}“ gerade durch – das kann ein paar Sekunden dauern.</p>
+    <div class="spinner"></div>
+  `;
+
+  const result = await callFunction('interpretNote', {
+    text, kind,
+    inventory: state.inventory.map(i=>i.name),
+    recipeNames: allRecipes().map(r=>r.name),
+    personalization: aiContext(),
+  });
+  if(!result.ok){ showNoteError(text, result.message); return; }
+  applyNoteResult(text, kind, result.data);
+}
+
+function showNoteError(text, message){
+  const content = document.getElementById('noteSheetContent');
+  content.innerHTML = `
+    <h2>Das hat nicht geklappt</h2>
+    <div class="card" style="background:var(--danger-bg);border-color:#fecaca;margin-bottom:14px;">
+      <p style="margin:0;font-size:12.5px;color:var(--danger);">${message}</p>
+    </div>
+    <button class="btn btn-primary" onclick="openNoteSheet()">Nochmal versuchen</button>
+    <button class="btn btn-outline" onclick="closeSheet('noteOverlay')">Abbrechen</button>
+  `;
+}
+
+// Wertet aus, was die KI in interpretNote.js aus der Notiz herausgelesen hat, und wendet
+// es auf den App-Zustand an. Ersetzt die frühere einfache Stichwort-Suche.
+function applyNoteResult(text, kind, data){
+  const label = data.summary || 'Notiz gespeichert';
+
+  if(data.intent === 'expiry' && data.itemName){
+    const item = findInventoryItem(data.itemName);
+    if(item && data.days){
+      item.expiry = todayOffset(data.days);
+    }
+  } else if(data.intent === 'favorite_existing' && data.recipeName){
+    const wanted = data.recipeName.toLowerCase();
+    const recipe = allRecipes().find(r=>r.name.toLowerCase()===wanted);
+    if(recipe){
+      state.favorites.add(recipe.id);
+      state.cookCounts[recipe.id] = Math.max(state.cookCounts[recipe.id]||0, 2);
+    }
+  } else if(data.intent === 'favorite_new' && data.recipe && data.recipe.name){
+    const id = 'ai'+(++idCounter);
+    const needs = [...(data.recipe.ingredientsHave||[]), ...(data.recipe.ingredientsMissing||[])];
+    state.customRecipes.push({
+      id, name: data.recipe.name, tags: data.recipe.tags||[], time: data.recipe.time||30,
+      kcal: data.recipe.kcal||0, protein: data.recipe.protein||0, needs, missing: [], steps: data.recipe.steps||[], isCustom: true,
+      ingredients: needs, tip: data.recipe.tip || '', portions: data.recipe.portions || 2, summary: data.recipe.summary || '',
+    });
+    // Direkt als Lieblingsgericht merken, so wie gewünscht: einmal genannt, taucht es
+    // ab sofort bei den Lieblingsgerichten auf und ist jederzeit wieder aufrufbar.
+    state.favorites.add(id);
+    state.cookCounts[id] = 2;
+  } else if(data.intent === 'favorite_ingredient' && data.ingredientName){
+    // Wird direkt in die Personalisierung übernommen (Lieblingszutaten), nicht nur als
+    // Notiz irgendwo angezeigt - genau wie gewünscht "einverleibt" statt sichtbar gelistet.
+    const existing = state.personalization.favoriteIngredients || '';
+    const already = existing.toLowerCase().includes(data.ingredientName.toLowerCase());
+    if(!already){
+      state.personalization.favoriteIngredients = existing ? `${existing}, ${data.ingredientName}` : data.ingredientName;
+    }
+  } else if(data.intent === 'preference' && data.tag){
+    // Vorliebe dauerhaft in der Personalisierung merken (nicht nur als kurzlebigen
+    // Filter) - sonst taucht der passende Filter-Chip gar nicht erst auf, weil die
+    // Chips sich aus der Personalisierung ergeben.
+    const p = state.personalization;
+    if(data.tag === 'vegan' || data.tag === 'vegetarisch'){
+      const label = data.tag === 'vegan' ? 'Vegan' : 'Vegetarisch';
+      if(!p.dietType.includes(label)) p.dietType.push(label);
+      state.filters[data.tag] = true;
+    } else if(data.tag === 'schnell'){
+      if(!p.cookTime) p.cookTime = '15–30 Minuten';
+      state.filters.fast = true;
+    }
+  }
+
+  // Bewusst KEINE Ablage/Anzeige der Notiz selbst mehr - sie wird nur "einverleibt"
+  // (siehe die Fallunterscheidung oben), nicht als Text irgendwo in der App aufgelistet.
+  closeSheet('noteOverlay');
+  renderAll();
+  toast(label);
+}
+
+/* ---------------- Sheets ---------------- */
+function closeSheet(id){
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.overlay').forEach(o=>{
+  o.addEventListener('click', e=>{ if(e.target===o) o.classList.remove('open'); });
+});
+
+/* ---------------- Sheet nach unten wegziehen ----------------
+   Der Griff oben am Sheet sah bisher so aus, als könnte man daran ziehen, tat aber
+   nichts. Jetzt lässt sich jedes Sheet daran (oder von ganz oben aus, wenn nicht
+   gescrollt wurde) nach unten wegziehen - gleiches Ergebnis wie das ✕ oben rechts.
+   Wichtig: Nur ziehen, wenn das Sheet ganz oben steht oder direkt am Griff gefasst
+   wurde, damit normales Scrollen im Sheet nicht gestört wird. */
+const SHEET_CLOSE_DISTANCE = 90;   // ab so vielen Pixeln nach unten wird geschlossen
+
+function enableSheetDrag(sheet){
+  let startY = null, delta = 0, dragging = false, viaHandle = false;
+
+  function tryStart(y, target){
+    // Auf Bedienelementen (Knöpfe, Eingabefelder, Listenzeilen) nicht ziehen,
+    // sonst funktionieren Taps darauf nicht mehr.
+    if(target.closest && target.closest('button, input, textarea, select, .review-item, .theme-option')) return false;
+    viaHandle = Boolean(target.closest && target.closest('.sheet-handle'));
+    // Aus dem Sheet-Inhalt heraus nur ziehen, wenn ganz oben - sonst kollidiert es
+    // mit dem normalen Scrollen im Sheet.
+    if(!viaHandle && sheet.scrollTop > 0) return false;
+    startY = y; delta = 0; dragging = true;
+    sheet.style.transition = 'none';
+    sheet.classList.add('dragging');
+    return true;
+  }
+
+  // Gibt true zurück, wenn wir die Geste tatsächlich verwenden (dann unterdrückt der
+  // Aufrufer das Standardverhalten des Browsers, also Scrollen/Markieren).
+  function moveTo(y){
+    if(!dragging) return false;
+    const dy = y - startY;
+    if(dy <= 0){ delta = 0; sheet.style.transform = ''; return false; }
+    if(!viaHandle && sheet.scrollTop > 0){ finish(); return false; }
+    // Falls versehentlich schon Text markiert wurde, Markierung wieder aufheben.
+    if(delta === 0){ const s = window.getSelection && window.getSelection(); if(s && s.removeAllRanges) s.removeAllRanges(); }
+    delta = dy;
+    sheet.style.transform = `translateY(${dy}px)`;
+    return true;
+  }
+
+  function finish(){
+    if(!dragging) return;
+    dragging = false; startY = null;
+    sheet.classList.remove('dragging');
+    sheet.style.transition = 'transform .22s ease';
+    if(delta > SHEET_CLOSE_DISTANCE){
+      sheet.style.transform = 'translateY(110%)';
+      const overlay = sheet.closest('.overlay');
+      setTimeout(()=>{
+        if(overlay) overlay.classList.remove('open');
+        sheet.style.transition = ''; sheet.style.transform = '';
+      }, 200);
+    } else {
+      sheet.style.transform = '';
+      setTimeout(()=>{ sheet.style.transition = ''; }, 240);
+    }
+    delta = 0;
+  }
+
+  /* Touch (Handy): eigene Touch-Handler statt Pointer-Events. Auf iOS entscheidet
+     der Browser bei Pointer-Events erst verzögert, ob die Geste ein Scrollen ist -
+     deshalb sprang das Ziehen vorher erst nach langem Draufdrücken an und löste
+     dabei die blaue Textmarkierung aus. Mit touch-action:none am Griff plus
+     preventDefault() im touchmove greift die Geste sofort und sauber. */
+  sheet.addEventListener('touchstart', (e)=>{
+    if(e.touches.length !== 1) return;
+    tryStart(e.touches[0].clientY, e.target);
+  }, {passive:true});
+
+  sheet.addEventListener('touchmove', (e)=>{
+    if(!dragging || e.touches.length !== 1) return;
+    if(moveTo(e.touches[0].clientY)) e.preventDefault();
+  }, {passive:false});
+
+  sheet.addEventListener('touchend', finish);
+  sheet.addEventListener('touchcancel', finish);
+
+  /* Maus (Desktop) - preventDefault verhindert das Markieren beim Ziehen. */
+  sheet.addEventListener('mousedown', (e)=>{
+    if(e.button !== 0) return;
+    if(tryStart(e.clientY, e.target)) e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e)=>{ if(dragging) moveTo(e.clientY); });
+  window.addEventListener('mouseup', ()=>{ if(dragging) finish(); });
+}
+
+document.querySelectorAll('.overlay .sheet').forEach(enableSheetDrag);
+
+/* ---------------- Personalisierung ----------------
+   Popup einmalig beim allerersten Öffnen ("state.personalization.asked" noch false) -
+   Frage, ob die App direkt personalisiert werden soll. Bei "Später" bleibt der Knopf
+   oben rechts im Header dauerhaft bestehen, um es jederzeit nachzuholen. Die eigentliche
+   Fragen-Befragung folgt in einem späteren Schritt - hier erstmal nur der Einstieg. */
+function maybeShowOnboarding(){
+  if(state.personalization.asked) return;
+  const content = document.getElementById('onboardingSheetContent');
+  content.innerHTML = `
+    <h2>Willkommen bei Easy Kitchen 👋</h2>
+    <p class="subtle" style="margin:10px 0 18px;">Willst du die App direkt für dich (oder deine Familie) personalisieren? Dann passen wir Rezeptvorschläge & Co. an eure Vorlieben an.</p>
+    <button class="btn btn-primary" onclick="startPersonalization()">Ja, personalisieren</button>
+    <button class="btn btn-outline" onclick="dismissOnboarding()">Später</button>
+  `;
+  document.getElementById('onboardingOverlay').classList.add('open');
+}
+
+function dismissOnboarding(){
+  state.personalization.asked = true;
+  closeSheet('onboardingOverlay');
+  saveState();
+}
+
+function startPersonalization(){
+  state.personalization.asked = true;
+  closeSheet('onboardingOverlay');
+  saveState();
+  openPersonalizeSheet();
+}
+
+/* ---------------- Einstellungen & Farbwelt ----------------
+   Die gewählte Farbwelt wird als data-theme am <body> gesetzt; alles Farbige läuft
+   über CSS-Variablen, deshalb greift ein Wechsel sofort in der ganzen App. Die Wahl
+   wird wie der übrige Zustand in localStorage gespeichert. */
+const THEMES = [
+  { key:'oliv', name:'Olivgrün & Papier', desc:'Warm und ruhig, passend zur Rezeptkarte', colors:['#5e7a4a','#faf6ec','#a08c5f'] },
+  { key:'blau', name:'Blau & Weiß', desc:'Klar und klassisch, wie am Anfang', colors:['#2563eb','#ffffff','#dbeafe'] },
+];
+
+// Küchengeräte zum Abhaken. Bewusst als offene Liste - niemand muss alles haben,
+// und wer nichts anhakt, bekommt weiterhin ganz normale Rezeptvorschläge.
+const APPLIANCES = [
+  'Herd / Kochfeld',
+  'Backofen',
+  'Mikrowelle',
+  'Airfryer / Heißluftfritteuse',
+  'Standmixer',
+  'Pürierstab',
+  'Küchenmaschine / Thermomix',
+  'Handrührgerät',
+  'Entsafter',
+  'Dampfgarer',
+  'Reiskocher',
+  'Wasserkocher',
+  'Toaster',
+  'Grill',
+];
+
+// Hakt ein Gerät an/ab. Das Häkchen wird direkt am angetippten Element umgeschaltet,
+// statt das ganze Sheet neu zu bauen - sonst würde die Liste bei jedem Tipp
+// nach oben springen.
+function toggleAppliance(el, name){
+  const i = state.appliances.indexOf(name);
+  if(i>=0) state.appliances.splice(i,1); else state.appliances.push(name);
+  const box = el.querySelector('.checkbox');
+  if(box) box.classList.toggle('checked', state.appliances.includes(name));
+  saveState();
+}
+
+// Steuert, ob die (recht lange) Geräteliste gerade aufgeklappt ist. Nach dem
+// Abschließen zeigt sie nur noch eine kurze Zusammenfassung - änderbar bleibt sie.
+let applianceListOpen = false;
+
+// Standardliste + selbst hinzugefügte Geräte
+function allAppliances(){ return APPLIANCES.concat(state.customAppliances); }
+
+function addCustomAppliance(){
+  const el = document.getElementById('customApplianceInput');
+  const name = (el ? el.value : '').trim().replace(/\s+/g,' ').slice(0, 50);
+  if(!name) return;
+  if(allAppliances().some(a => a.toLowerCase() === name.toLowerCase())){
+    toast('Das steht schon in der Liste');
+    if(el) el.value = '';
+    return;
+  }
+  state.customAppliances.push(name);
+  if(!state.appliances.includes(name)) state.appliances.push(name);   // direkt angehakt
+  saveState();
+  openSettingsSheet({keepEdit:true});
+  toast(`„${name}“ hinzugefügt`);
+}
+
+function removeCustomAppliance(name){
+  state.customAppliances = state.customAppliances.filter(a=>a!==name);
+  state.appliances = state.appliances.filter(a=>a!==name);
+  saveState();
+  openSettingsSheet({keepEdit:true});
+  toast('Gerät entfernt');
+}
+
+function finishAppliances(){
+  state.appliancesSet = true;
+  applianceListOpen = false;
+  saveState();
+  openSettingsSheet({keepEdit:true});
+  toast(state.appliances.length
+    ? `${state.appliances.length} ${state.appliances.length===1?'Gerät':'Geräte'} gespeichert`
+    : 'Keine Geräte ausgewählt – Vorschläge bleiben wie bisher');
+}
+
+function editAppliances(){
+  applianceListOpen = true;
+  openSettingsSheet({keepEdit:true});
+}
+
+/* ---------------- Daten sichern & übertragen ----------------
+   Alles wird im Browser gespeichert und hängt damit an der Internetadresse. Beim
+   Umzug auf eine andere Adresse (anderer Hoster, eigene Domain) wären die Daten
+   sonst weg. Mit Export/Import kann man sie als Datei mitnehmen - und hat
+   nebenbei eine Sicherungskopie. */
+function exportData(){
+  try{
+    const payload = {
+      app: 'EasyKitchen',
+      version: APP_VERSION,
+      exportedAt: new Date().toISOString(),
+      data: JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = toISODate(new Date());
+    a.href = url;
+    a.download = `easy-kitchen-daten-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    toast('Datei mit deinen Daten erstellt');
+  }catch(e){
+    toast('Export hat nicht geklappt');
+    console.warn('Export fehlgeschlagen:', e);
+  }
+}
+
+function triggerImport(){
+  const el = document.getElementById('importFileInput');
+  if(el) el.click();
+}
+
+function onImportFileChosen(event){
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    let parsed;
+    try{
+      parsed = JSON.parse(e.target.result);
+    }catch(err){
+      toast('Das ist keine gültige Easy-Kitchen-Datei');
+      return;
+    }
+    // Sowohl das Export-Format als auch ein direkt kopierter Speicherstand annehmen.
+    const data = (parsed && parsed.data) ? parsed.data : parsed;
+    if(!data || typeof data !== 'object' || (!Array.isArray(data.inventory) && !data.personalization)){
+      toast('Die Datei enthält keine Easy-Kitchen-Daten');
+      return;
+    }
+    if(!confirm('Deine jetzigen Daten in dieser App werden dabei durch die Daten aus der Datei ersetzt. Fortfahren?')) return;
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }catch(err){
+      toast('Konnte die Daten nicht speichern');
+      return;
+    }
+    toast('Daten übernommen – App wird neu geladen');
+    setTimeout(()=>location.reload(), 900);
+  };
+  reader.readAsText(file);
+}
+
+// Lädt die App bewusst mit einem Zeitstempel in der Adresse neu. Damit umgeht man
+// auch einen hartnäckig zwischengespeicherten Stand (vor allem im Home-Bildschirm-
+// Modus auf dem iPhone), ohne die App löschen und neu hinzufügen zu müssen.
+function reloadApp(){
+  saveState();
+  const base = location.origin + location.pathname;
+  location.replace(base + '?frisch=' + Date.now());
+}
+
+function applyTheme(){
+  document.body.setAttribute('data-theme', state.theme);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.setAttribute('content', state.theme === 'blau' ? '#2563eb' : '#5e7a4a');
+}
+
+function setTheme(key){
+  state.theme = key;
+  applyTheme();
+  saveState();
+  openSettingsSheet({keepEdit:true});   // Auswahl-Häkchen sofort aktualisieren
+  toast(`Farbe geändert: ${THEMES.find(t=>t.key===key).name}`);
+}
+
+// keepEdit: true = der aufgeklappte/zugeklappte Zustand der Geräteliste bleibt erhalten
+// (beim Neuzeichnen innerhalb der Einstellungen). Ohne die Option - also beim frischen
+// Öffnen über das Zahnrad - startet die Liste wieder eingeklappt.
+function openSettingsSheet(opts){
+  const keep = Boolean(opts && opts.keepEdit);
+  if(!keep) applianceListOpen = false;
+  const sheetEl = document.querySelector('#settingsOverlay .sheet');
+  // Beim Neuzeichnen innerhalb der Einstellungen (Gerät hinzufügen, Farbe wechseln)
+  // die Scrollposition beibehalten, damit die Liste nicht nach oben springt.
+  const keepScroll = keep && sheetEl ? sheetEl.scrollTop : 0;
+  const content = document.getElementById('settingsSheetContent');
+  const p = state.personalization;
+  content.innerHTML = `
+    <h2>Einstellungen</h2>
+
+    <div class="section-title" style="margin-top:18px;">Farbe</div>
+    ${THEMES.map(t=>`
+      <button class="theme-option ${state.theme===t.key?'active':''}" onclick="setTheme('${t.key}')">
+        <span class="theme-swatch">${t.colors.map(c=>`<i style="background:${c}"></i>`).join('')}</span>
+        <span>
+          <strong>${t.name}</strong>
+          <small>${t.desc}</small>
+        </span>
+        ${state.theme===t.key?`<span class="theme-check">${ICONS.check}</span>`:''}
+      </button>`).join('')}
+
+    <div class="section-title">Deine Küchengeräte</div>
+    ${(state.appliancesSet && !applianceListOpen) ? `
+      <div class="card" style="margin-bottom:10px;">
+        <div class="expiry-item" style="border-bottom:none;padding:4px 0;">
+          <div class="info" style="flex:1">
+            <strong style="font-size:13.5px;">${state.appliances.length ? `${state.appliances.length} ${state.appliances.length===1?'Gerät':'Geräte'} ausgewählt` : 'Keine Angabe'}</strong>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
+              ${state.appliances.length ? escapeHtml(state.appliances.join(', ')) : 'Die Vorschläge bleiben wie bisher.'}
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-outline" style="margin-bottom:16px;" onclick="editAppliances()">Geräte ändern</button>
+    ` : `
+      <p class="subtle" style="font-size:12px;margin:-4px 0 10px;">
+        Hak ab, was du hast – dann schlägt die KI nur Rezepte vor, die du auch wirklich zubereiten kannst.
+        Ohne Auswahl bleiben die Vorschläge wie bisher.
+      </p>
+      <div class="card" style="margin-bottom:10px;">
+        ${allAppliances().map(a=>{
+          const isCustom = state.customAppliances.includes(a);
+          return `
+          <div class="review-item" onclick='toggleAppliance(this, ${JSON.stringify(a)})' style="cursor:pointer;">
+            <div class="checkbox ${state.appliances.includes(a)?'checked':''}">${ICONS.check}</div>
+            <div class="info" style="flex:1">${escapeHtml(a)}</div>
+            ${isCustom ? `<button onclick='event.stopPropagation(); removeCustomAppliance(${JSON.stringify(a)})' title="Entfernen" style="border:none;background:none;color:var(--text-muted);cursor:pointer;padding:8px;margin:-8px -4px -8px 0;font-size:15px;">✕</button>` : ''}
+          </div>`;
+        }).join('')}
+        <div class="review-item" style="gap:8px;">
+          <input id="customApplianceInput" type="text" maxlength="50" placeholder="Eigenes Gerät hinzufügen …"
+                 onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomAppliance();}"
+                 style="flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;background:var(--bg);" />
+          <button onclick="addCustomAppliance()" title="Hinzufügen"
+                  style="border:none;background:var(--primary);color:#fff;width:34px;height:34px;border-radius:9px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <span style="width:16px;height:16px;">${ICONS.plus}</span>
+          </button>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:16px;" onclick="finishAppliances()">Fertig</button>
+    `}
+
+    <div class="section-title">Deine Einstellungen</div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="expiry-item" style="border-bottom:none;padding:4px 0;">
+        <div class="info" style="flex:1">
+          <strong style="font-size:13.5px;">Personalisierung</strong>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
+            ${p.done ? 'Eingerichtet – du kannst deine Antworten jederzeit ändern.' : 'Noch nicht eingerichtet.'}
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="closeSheet('settingsOverlay'); openPersonalizeSheet();">
+      ${p.done ? 'Personalisierung ändern' : 'Jetzt personalisieren'}
+    </button>
+
+    <div class="section-title">Haushalt</div>
+    ${state.householdId ? `
+      <div class="card" style="margin-bottom:10px;">
+        <div class="expiry-item" style="border-bottom:none;padding:4px 0;">
+          <div class="info" style="flex:1">
+            <strong style="font-size:13.5px;">Code zum Teilen: ${escapeHtml(state.household.code)}</strong>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
+              ${state.household.members.length ? `${state.household.members.length} Mitglied${state.household.members.length===1?'':'er'}: ${escapeHtml(state.household.members.map(m=>m.name).join(', '))}` : `Angemeldet als ${escapeHtml(state.memberName)}`}
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="subtle" style="font-size:12px;margin:-4px 0 10px;">Bestand und Einkaufsliste werden alle 10 Sekunden mit den anderen Mitgliedern abgeglichen.</p>
+      <button class="btn btn-outline" style="margin-bottom:16px;" onclick="leaveHousehold()">Haushalt verlassen</button>
+    ` : `
+      <p class="subtle" style="font-size:12px;margin:-4px 0 10px;">
+        Teile Bestand und Einkaufsliste mit deiner Familie – gründe einen Haushalt oder tritt mit einem Code bei.
+      </p>
+      <button class="btn btn-primary" style="margin-bottom:16px;" onclick="closeSheet('settingsOverlay'); showFirstTimeSetup();">Haushalt einrichten</button>
+    `}
+
+    <div class="section-title">Über die App</div>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="expiry-item" style="border-bottom:none;padding:4px 0;">
+        <div class="info" style="flex:1">
+          <strong style="font-size:13.5px;">Easy Kitchen</strong>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">Version ${APP_VERSION}</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-outline" style="margin-bottom:16px;" onclick="reloadApp()">Nach Update suchen</button>
+
+    <div class="section-title">Daten sichern</div>
+    <p class="subtle" style="font-size:12px;margin:-4px 0 10px;">
+      Deine Daten liegen nur in diesem Browser. Sichere sie als Datei – so kannst du sie
+      auf ein anderes Gerät oder eine andere Adresse übertragen.
+    </p>
+    <button class="btn btn-outline" onclick="exportData()">Daten als Datei sichern</button>
+    <button class="btn btn-outline" onclick="triggerImport()">Daten aus Datei laden</button>
+    <input id="importFileInput" type="file" accept="application/json,.json" style="display:none" onchange="onImportFileChosen(event)" />
+
+    <button class="btn btn-outline" style="margin-top:16px;" onclick="closeSheet('settingsOverlay')">Schließen</button>
+  `;
+  document.getElementById('settingsOverlay').classList.add('open');
+  if(sheetEl && keepScroll) sheetEl.scrollTop = keepScroll;
+}
+
+/* ---------------- Personalisierung: Fragen-Assistent ----------------
+   Schritt 1 (Ziele, Mehrfachauswahl) + eine allgemeine Frage nach Lieblingszutaten,
+   danach je nach gewählten Zielen dynamisch weitere, passende Fragen. Antworten landen
+   in state.personalization und werden von dort an die KI-Functions (generateRecipe,
+   interpretNote) weitergereicht sowie zur Sortierung der Rezeptvorschläge genutzt. */
+const PERSONALIZE_GOALS = [
+  'Lebensmittelverschwendung vermeiden',
+  'Geld sparen beim Einkaufen',
+  'Zeit sparen im Alltag',
+  'Überblick über den Bestand behalten',
+  'Gesünder ernähren',
+];
+const DIET_TYPES = ['Vegan', 'Vegetarisch', 'Low-Carb', 'Keto', 'Keine bestimmte Ernährungsform'];
+const DIET_FOCUS = ['Proteinreich', 'Wenig Zucker', 'Viele Ballaststoffe', 'Viel Gemüse & Obst', 'Wenig verarbeitete Lebensmittel (Clean Eating)', 'Wenig Salz', 'Fettarm', 'Glutenfrei'];
+const COOKTIME_OPTIONS = ['< 15 Minuten', '15–30 Minuten', '30–60 Minuten', 'Ist mir egal'];
+const HOUSEHOLD_OPTIONS = ['Nur ich', '2 Personen', 'Familie / mehrere Personen'];
+const USESTOCK_OPTIONS = ['Ja, möglichst wenig dazukaufen', 'Ist mir nicht so wichtig'];
+
+let personalizeDraft = null;
+let personalizeSteps = [];
+let personalizeStepIdx = 0;
+
+function openPersonalizeSheet(){
+  // Mit evtl. schon vorhandenen Antworten vorbelegen, damit man sie später ändern kann.
+  const p = state.personalization;
+  personalizeDraft = {
+    goals: [...(p.goals||[])],
+    favoriteIngredients: p.favoriteIngredients || '',
+    useStockFirst: p.useStockFirst || null,
+    cookTime: p.cookTime || null,
+    householdSize: p.householdSize || null,
+    dietType: [...(p.dietType||[])],
+    dietFocus: [...(p.dietFocus||[])],
+  };
+  personalizeSteps = buildPersonalizeSteps(personalizeDraft.goals);
+  personalizeStepIdx = 0;
+  renderPersonalizeStep();
+  document.getElementById('personalizeOverlay').classList.add('open');
+}
+
+function buildPersonalizeSteps(goals){
+  const steps = ['goals', 'ingredients'];
+  if(goals.includes('Geld sparen beim Einkaufen')) steps.push('useStockFirst');
+  if(goals.includes('Zeit sparen im Alltag')) steps.push('cookTime');
+  if(goals.includes('Überblick über den Bestand behalten')) steps.push('householdSize');
+  if(goals.includes('Gesünder ernähren')) steps.push('dietType', 'dietFocus');
+  steps.push('done');
+  return steps;
+}
+
+function togglePersonalizeMulti(field, value){
+  const arr = personalizeDraft[field];
+  const i = arr.indexOf(value);
+  if(i>=0) arr.splice(i,1); else arr.push(value);
+  if(field === 'goals'){
+    // Ziele bestimmen, welche Folgefragen überhaupt kommen - Schritte neu berechnen.
+    personalizeSteps = buildPersonalizeSteps(personalizeDraft.goals);
+  }
+  renderPersonalizeStep();
+}
+
+function selectPersonalizeSingle(field, value){
+  personalizeDraft[field] = personalizeDraft[field] === value ? null : value;
+  renderPersonalizeStep();
+}
+
+function personalizeNext(){
+  if(personalizeStepIdx < personalizeSteps.length - 1){
+    personalizeStepIdx++;
+    renderPersonalizeStep();
+  }
+}
+
+function personalizeBack(){
+  if(personalizeStepIdx > 0){
+    personalizeStepIdx--;
+    renderPersonalizeStep();
+  }
+}
+
+function personalizeSaveIngredientsAndNext(){
+  const el = document.getElementById('personalizeIngredientsInput');
+  personalizeDraft.favoriteIngredients = el ? el.value : '';
+  personalizeNext();
+}
+
+function finishPersonalization(){
+  state.personalization = {
+    ...state.personalization,
+    asked: true,
+    done: true,
+    goals: personalizeDraft.goals,
+    favoriteIngredients: personalizeDraft.favoriteIngredients.trim(),
+    useStockFirst: personalizeDraft.useStockFirst,
+    cookTime: personalizeDraft.cookTime,
+    householdSize: personalizeDraft.householdSize,
+    dietType: personalizeDraft.dietType,
+    dietFocus: personalizeDraft.dietFocus,
+  };
+  closeSheet('personalizeOverlay');
+  renderAll();
+  toast('Personalisierung gespeichert ✓');
+}
+
+function renderCheckboxOptions(options, selectedArr, field){
+  // onclick-Attribut bewusst einfach angeführt, mit JSON.stringify() (=> doppelte
+  // Anführungszeichen) für die Argumente - sonst kollidieren die Anführungszeichen von
+  // JSON.stringify mit denen des HTML-Attributs (gleiches Muster wie confirmRecognition()).
+  return options.map(o=>`
+    <div class="review-item" onclick='togglePersonalizeMulti(${JSON.stringify(field)}, ${JSON.stringify(o)})' style="cursor:pointer;">
+      <div class="checkbox ${selectedArr.includes(o)?'checked':''}">${ICONS.check}</div>
+      <div class="info" style="flex:1">${o}</div>
+    </div>`).join('');
+}
+
+function renderRadioOptions(options, selectedVal, field){
+  return options.map(o=>`
+    <div class="review-item" onclick='selectPersonalizeSingle(${JSON.stringify(field)}, ${JSON.stringify(o)})' style="cursor:pointer;">
+      <div class="checkbox ${selectedVal===o?'checked':''}">${ICONS.check}</div>
+      <div class="info" style="flex:1">${o}</div>
+    </div>`).join('');
+}
+
+function renderPersonalizeStep(){
+  const step = personalizeSteps[personalizeStepIdx];
+  const content = document.getElementById('personalizeSheetContent');
+  const progress = `<div class="subtle" style="font-size:11px;margin-bottom:10px;">Schritt ${personalizeStepIdx+1} von ${personalizeSteps.length}</div>`;
+  const backBtn = personalizeStepIdx>0 ? `<button class="btn btn-outline" onclick="personalizeBack()">Zurück</button>` : '';
+
+  if(step === 'goals'){
+    content.innerHTML = `
+      ${progress}
+      <h2>Was ist dein Ziel?</h2>
+      <p class="subtle" style="margin:8px 0 14px;">Du kannst mehrere auswählen.</p>
+      <div class="card" style="margin-bottom:14px;">${renderCheckboxOptions(PERSONALIZE_GOALS, personalizeDraft.goals, 'goals')}</div>
+      <button class="btn btn-primary" onclick="personalizeNext()">Weiter</button>
+      ${backBtn}
+    `;
+  } else if(step === 'ingredients'){
+    content.innerHTML = `
+      ${progress}
+      <h2>Welche Zutaten benutzt du am liebsten?</h2>
+      <p class="subtle" style="margin:8px 0 14px;">Optional - hilft der KI, Vorschläge zu machen, die wirklich zu dir passen.</p>
+      <textarea id="personalizeIngredientsInput" rows="3" placeholder="z.B. Tofu, Süßkartoffel, Kichererbsen, Chili" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid var(--border);border-radius:var(--radius-md);font-family:inherit;font-size:14px;resize:vertical;">${escapeHtml(personalizeDraft.favoriteIngredients)}</textarea>
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="personalizeSaveIngredientsAndNext()">Weiter</button>
+      ${backBtn}
+    `;
+  } else if(step === 'useStockFirst'){
+    content.innerHTML = `
+      ${progress}
+      <h2>Geld sparen beim Einkaufen</h2>
+      <p class="subtle" style="margin:8px 0 14px;">Sollen Rezeptvorschläge möglichst das nutzen, was du eh schon zuhause hast, statt neue Zutaten vorzuschlagen?</p>
+      <div class="card" style="margin-bottom:14px;">${renderRadioOptions(USESTOCK_OPTIONS, personalizeDraft.useStockFirst, 'useStockFirst')}</div>
+      <button class="btn btn-primary" onclick="personalizeNext()">Weiter</button>
+      ${backBtn}
+    `;
+  } else if(step === 'cookTime'){
+    content.innerHTML = `
+      ${progress}
+      <h2>Zeit sparen im Alltag</h2>
+      <p class="subtle" style="margin:8px 0 14px;">Wie viel Zeit hast du unter der Woche meistens zum Kochen?</p>
+      <div class="card" style="margin-bottom:14px;">${renderRadioOptions(COOKTIME_OPTIONS, personalizeDraft.cookTime, 'cookTime')}</div>
+      <button class="btn btn-primary" onclick="personalizeNext()">Weiter</button>
+      ${backBtn}
+    `;
+  } else if(step === 'householdSize'){
+    content.innerHTML = `
+      ${progress}
+      <h2>Überblick über den Bestand</h2>
+      <p class="subtle" style="margin:8px 0 14px;">Für wie viele Personen kaufst/kochst du meistens ein?</p>
+      <div class="card" style="margin-bottom:14px;">${renderRadioOptions(HOUSEHOLD_OPTIONS, personalizeDraft.householdSize, 'householdSize')}</div>
+      <button class="btn btn-primary" onclick="personalizeNext()">Weiter</button>
+      ${backBtn}
+    `;
+  } else if(step === 'dietType'){
+    content.innerHTML = `
+      ${progress}
+      <h2>Ernährungsform</h2>
+      <p class="subtle" style="margin:8px 0 14px;">Was trifft am ehesten zu? Mehrfachauswahl möglich.</p>
+      <div class="card" style="margin-bottom:14px;">${renderCheckboxOptions(DIET_TYPES, personalizeDraft.dietType, 'dietType')}</div>
+      <button class="btn btn-primary" onclick="personalizeNext()">Weiter</button>
+      ${backBtn}
+    `;
+  } else if(step === 'dietFocus'){
+    content.innerHTML = `
+      ${progress}
+      <h2>Worauf achtest du sonst noch?</h2>
+      <p class="subtle" style="margin:8px 0 14px;">Mehrfachauswahl möglich, auch keine ist okay.</p>
+      <div class="card" style="margin-bottom:14px;">${renderCheckboxOptions(DIET_FOCUS, personalizeDraft.dietFocus, 'dietFocus')}</div>
+      <button class="btn btn-primary" onclick="personalizeNext()">Weiter</button>
+      ${backBtn}
+    `;
+  } else if(step === 'done'){
+    content.innerHTML = `
+      ${progress}
+      <h2>Fertig ✓</h2>
+      <p class="subtle" style="margin:8px 0 14px;">Easy Kitchen richtet sich jetzt danach - bei Rezeptvorschlägen, der eigenen Rezeptidee und der Schnellnotiz. Du kannst deine Antworten jederzeit über den Knopf oben rechts wieder ändern.</p>
+      <button class="btn btn-primary" onclick="finishPersonalization()">Speichern & fertig</button>
+      ${backBtn}
+    `;
+  }
+}
+
+/* ---------------- Haushalt-Sharing ----------------
+   Mehrere Familienmitglieder teilen sich einen Haushalt (per Code verbunden) und sehen
+   denselben Bestand + dieselbe Einkaufsliste. Offline-tauglich: jede Änderung landet
+   SOFORT lokal (localStorage, wie bisher) und wird danach im Hintergrund zum Server
+   geschickt - klappt das nicht (kein Netz), bleibt die Änderung einfach lokal und wird
+   beim nächsten erfolgreichen Sync automatisch nachgereicht bzw. vom nächsten Sync mit
+   erfasst. Es gibt absichtlich KEINEN Modus, der die App blockiert, wenn kein Haushalt
+   eingerichtet ist - Easy Kitchen funktioniert weiterhin vollständig allein/lokal. */
+
+const MEMBER_COLORS = ['#e07a5f','#3d5a80','#81b29a','#f2cc8f','#9b5de5','#00bbf9','#f15bb5','#606c38'];
+function pickMemberColor(){
+  return MEMBER_COLORS[Math.floor(Math.random()*MEMBER_COLORS.length)];
+}
+
+async function safeJson(res){
+  try{ return await res.json(); }catch(e){ return null; }
+}
+
+function showFirstTimeSetup(){
+  const content = document.getElementById('householdSheetContent');
+  content.innerHTML = `
+    <h2>Küche teilen? 🍽️</h2>
+    <p class="subtle" style="margin:10px 0 18px;">
+      Gründe einen Haushalt oder tritt mit einem Code bei – dann seht ihr als Familie
+      denselben Bestand und dieselbe Einkaufsliste, automatisch aktuell auf allen Geräten.
+      Du kannst Easy Kitchen aber auch einfach allein weiter nutzen.
+    </p>
+    <button class="btn btn-primary" onclick="createHousehold()">Haushalt gründen</button>
+    <button class="btn btn-outline" style="margin-top:8px;" onclick="joinHousehold()">Mit Code beitreten</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" onclick="dismissHouseholdSetup()">Später / allein nutzen</button>
+  `;
+  document.getElementById('householdOverlay').classList.add('open');
+}
+
+function dismissHouseholdSetup(){
+  state.householdSetupAsked = true;
+  closeSheet('householdOverlay');
+  saveState();
+}
+
+async function createHousehold(){
+  const name = (prompt('Wie heißt du? (wird den anderen Haushaltsmitgliedern angezeigt)') || '').trim();
+  if(!name) return;
+  try{
+    const res = await fetch('/api/household/create', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ memberName: name, color: pickMemberColor() }),
+    });
+    const data = await safeJson(res);
+    if(!res.ok || !data || !data.householdId){
+      alert((data && data.error) || 'Haushalt konnte nicht erstellt werden. Bitte später erneut versuchen.');
+      return;
+    }
+    applyHouseholdLogin(data);
+    closeSheet('householdOverlay');
+    alert(`Haushalt gegründet! 🎉\n\nDein Code zum Teilen: ${data.code}\n\nGib diesen Code den anderen Familienmitgliedern, damit sie beitreten können.`);
+    await syncFromDatabase();
+    renderAll();
+    startHouseholdSyncLoop();
+  }catch(e){
+    alert('Keine Verbindung zum Server – bitte prüfe deine Internetverbindung und versuch es später erneut.');
+  }
+}
+
+async function joinHousehold(){
+  const code = (prompt('Haushalts-Code eingeben:') || '').trim().toUpperCase();
+  if(!code) return;
+  const name = (prompt('Wie heißt du? (wird den anderen Haushaltsmitgliedern angezeigt)') || '').trim();
+  if(!name) return;
+  try{
+    const res = await fetch('/api/household/join', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code, memberName: name, color: pickMemberColor() }),
+    });
+    const data = await safeJson(res);
+    if(!res.ok || !data || !data.householdId){
+      alert((data && data.error) || 'Beitritt fehlgeschlagen. Bitte prüfe den Code.');
+      return;
+    }
+    applyHouseholdLogin(data);
+    closeSheet('householdOverlay');
+    alert(`Willkommen! Du bist jetzt als „${name}“ mit dem Haushalt verbunden.`);
+    await syncFromDatabase();
+    renderAll();
+    startHouseholdSyncLoop();
+  }catch(e){
+    alert('Keine Verbindung zum Server – bitte prüfe deine Internetverbindung und versuch es später erneut.');
+  }
+}
+
+function applyHouseholdLogin(data){
+  state.householdId = data.householdId;
+  state.memberId = data.memberId;
+  state.memberName = data.name;
+  state.household.code = data.code;
+  state.householdSetupAsked = true;
+  state.lastSync = 0;   // beim ersten Sync danach wirklich alles vom Server holen
+  saveState();
+}
+
+function leaveHousehold(){
+  if(!confirm('Haushalt wirklich verlassen? Dein Bestand bleibt auf diesem Gerät erhalten, wird aber nicht mehr mit den anderen geteilt.')) return;
+  if(householdSyncTimer){ clearInterval(householdSyncTimer); householdSyncTimer = null; }
+  state.householdId = null;
+  state.memberId = null;
+  state.memberName = '';
+  state.household = { code:'', members:[] };
+  state.lastSync = 0;
+  saveState();
+  closeSheet('settingsOverlay');
+  toast('Haushalt verlassen – du nutzt Easy Kitchen jetzt wieder allein.');
+}
+
+let householdSyncTimer = null;
+function startHouseholdSyncLoop(){
+  if(householdSyncTimer) return;   // läuft schon - nicht doppelt starten
+  householdSyncTimer = setInterval(() => {
+    if(state.householdId) syncFromDatabase().then(renderAll);
+  }, 10000);
+}
+
+function initHousehold(){
+  if(state.householdId){
+    syncFromDatabase().then(renderAll);
+    startHouseholdSyncLoop();
+  } else if(!state.householdSetupAsked){
+    showFirstTimeSetup();
+  }
+}
+
+// Schickt einen neu angelegten Bestand-Artikel an den Haushalts-Server (falls verbunden).
+// Läuft bewusst NACH dem lokalen Speichern in addToInventory() - die App bleibt dadurch
+// offline-fähig: ohne Verbindung bleibt der Artikel einfach lokal und taucht beim nächsten
+// erfolgreichen Sync automatisch auch für die anderen Haushaltsmitglieder auf.
+async function syncNewInventoryItemToBackend(item){
+  if(!state.householdId || !state.memberId) return;
+  try{
+    const res = await fetch('/api/inventory/add', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        householdId: state.householdId,
+        memberId: state.memberId,
+        name: item.name,
+        category: item.category,
+        expiry: item.expiry.toISOString(),
+        exact: true,
+      }),
+    });
+    if(!res.ok) return;   // bleibt lokal, kein harter Fehler für die Person sichtbar
+    const data = await safeJson(res);
+    // Bewusst NICHT item.id ersetzen (das wird an vielen Stellen ungequotet in
+    // onclick-Attribute eingesetzt, z.B. onclick="removeItem(${i.id})" - eine
+    // UUID würde dort ungültiges JavaScript erzeugen). Stattdessen die Server-ID
+    // separat merken, für Abgleich/Zusammenführung beim nächsten Sync.
+    if(data && data.id) item.dbId = data.id;
+  }catch(e){
+    console.warn('Konnte Artikel nicht an den Haushalt senden (evtl. offline):', e);
+  }
+}
+
+async function syncNewShoppingItemToBackend(item){
+  if(!state.householdId || !state.memberId) return;
+  try{
+    const res = await fetch('/api/shopping/add', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ householdId: state.householdId, memberId: state.memberId, label: item.label }),
+    });
+    if(!res.ok) return;
+    const data = await safeJson(res);
+    if(data && data.id) item.dbId = data.id;
+  }catch(e){
+    console.warn('Konnte Einkaufsliste nicht mit dem Haushalt synchronisieren (evtl. offline):', e);
+  }
+}
+
+async function syncCheckedShoppingItemToBackend(dbId){
+  if(!state.householdId || !state.memberId) return;
+  try{
+    await fetch('/api/shopping/check', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ householdId: state.householdId, memberId: state.memberId, id: dbId, checked: true }),
+    });
+  }catch(e){
+    console.warn('Konnte "erledigt" nicht mit dem Haushalt synchronisieren (evtl. offline):', e);
+  }
+}
+
+// Holt Bestand + Einkaufsliste + Mitglieder vom Server und führt sie mit dem lokalen
+// Stand zusammen. Konflikt-Auflösung: der Server gewinnt (einfache, für eine Familie
+// völlig ausreichende Regel - Konflikte sind bei einem 10-Sekunden-Intervall selten).
+async function syncFromDatabase(){
+  if(!state.householdId) return;
+  try{
+    const url = `/api/sync?householdId=${encodeURIComponent(state.householdId)}&since=${encodeURIComponent(state.lastSync||0)}`;
+    const res = await fetch(url);
+    const data = await safeJson(res);
+    if(!res.ok){
+      console.warn('Haushalt-Sync fehlgeschlagen:', data && data.error);
+      return;   // Fehler/offline: lokalen Stand einfach behalten, kein Datenverlust
+    }
+    if(!data) return;
+    mergeInventoryFromBackend(data.inventory || []);
+    mergeShoppingFromBackend(data.shopping || []);
+    mergeMembersFromBackend(data.members || []);
+    state.lastSync = data.timestamp || Date.now();
+    saveState();
+  }catch(e){
+    console.warn('Haushalt-Server nicht erreichbar (evtl. offline):', e);
+  }
+}
+
+function mergeInventoryFromBackend(rows){
+  let changed = false;
+  rows.forEach(r => {
+    const localByDbId = state.inventory.find(i => i.dbId === r.id);
+    if(localByDbId){
+      // Backend gewinnt bei Konflikten (siehe Kommentar bei syncFromDatabase).
+      localByDbId.name = r.name;
+      localByDbId.category = r.category || localByDbId.category;
+      if(r.expiry) localByDbId.expiry = new Date(r.expiry);
+      changed = true;
+      return;
+    }
+    const localByName = findInventoryItem(r.name);
+    if(localByName && !localByName.dbId){
+      // Wurde von diesem Gerät kurz zuvor angelegt - jetzt vom Server bestätigt.
+      localByName.dbId = r.id;
+      return;
+    }
+    // Neuer Artikel, den ein anderes Haushaltsmitglied hinzugefügt hat.
+    state.inventory.push({
+      id: ++idCounter,
+      dbId: r.id,
+      name: r.name,
+      category: r.category || 'Kühlschrank',
+      expiry: r.expiry ? new Date(r.expiry) : todayOffset(14),
+    });
+    changed = true;
+  });
+  if(changed) inventoryOrderCache = null;
+}
+
+function mergeShoppingFromBackend(rows){
+  const backendIds = new Set(rows.map(r => r.id));
+  // Von einem anderen Mitglied abgehakte/entfernte Einträge auch hier rausnehmen.
+  state.shopping.restock = state.shopping.restock.filter(i => !i.dbId || backendIds.has(i.dbId));
+  rows.forEach(r => {
+    const existing = state.shopping.restock.find(i => i.dbId === r.id);
+    if(existing){ existing.label = r.label; return; }
+    // Schon lokal vorhanden, aber noch ohne dbId (gerade erst selbst hinzugefügt)?
+    const pending = state.shopping.restock.find(i => !i.dbId && namesMatch(i.label, r.label));
+    if(pending){ pending.dbId = r.id; return; }
+    state.shopping.restock.unshift({
+      id: 'db'+r.id, dbId: r.id, label: r.label, checked:false, created: new Date(r.created_at).getTime(),
+    });
+  });
+  state.shopping.restock = state.shopping.restock.slice(0, 20);
+}
+
+function mergeMembersFromBackend(rows){
+  state.household.members = rows.map(r => ({ id:r.id, name:r.name, color:r.color }));
+}
+
+/* ---------------- Render all ---------------- */
+function renderAll(){
+  renderDashboard();
+  renderInventory();
+  renderFilters();
+  renderRecipes();
+  renderShopping();
+  saveState();
+}
+
+applyTheme();
+renderNav();
+renderAll();
+if(!hadSavedState) saveState(); // Beispieldaten beim allerersten Start direkt sichern
+maybeShowOnboarding();
+initHousehold();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "name": "easy-kitchen-vercel",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Backend-Functions für Easy Kitchen (Vercel Serverless Functions).",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.0"
+  }
+}

@@ -1,0 +1,26 @@
+Easy Kitchen - Paket fuer VERCEL
+=================================
+
+Wenn du diese Datei siehst, bist du im richtigen Ordner.
+
+In diesem Ordner MUESSEN liegen:
+  api            (Ordner - die drei KI-Funktionen)
+  lib            (Ordner - der gemeinsame Code)
+  index.html     (die App)
+  vercel.json    (die Einstellungen)
+  + die Bilddateien (icon-*.png, favicon-*.png, apple-touch-icon.png,
+    icon-source.svg, manifest.json)
+
+Hier darf NICHT liegen:
+  netlify        (Ordner)
+  netlify.toml
+
+Wenn du "netlify" siehst, ist es das falsche Paket.
+
+Hochladen: den INHALT dieses Ordners auswaehlen (alle Eintraege,
+auch die Ordner api und lib) und zu Vercel ziehen - nicht den
+Ordner selbst.
+
+Danach nicht vergessen:
+  Einstellungen -> Umgebungsvariablen -> GEMINI_API_KEY eintragen
+  Bereitstellungen -> drei Punkte -> Erneut bereitstellen
