@@ -181,6 +181,50 @@
   .badge.success{background:var(--success-bg);color:var(--success);}
   .badge.primary{background:var(--primary-light);color:var(--primary-dark);}
 
+  /* ---------------- Gesundheitstracker ---------------- */
+  .nut-item{padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+  .nut-item:last-of-type{border-bottom:none;}
+  .nut-head{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;}
+  .nut-head strong{flex:1;font-size:13.5px;}
+  .nut-val{font-size:12.5px;font-weight:700;color:var(--primary-dark);white-space:nowrap;}
+  .nut-bar{height:7px;background:var(--bg);border-radius:99px;overflow:hidden;}
+  .nut-bar i{display:block;height:100%;background:var(--primary);border-radius:99px;}
+  .nut-least{margin-top:12px;padding-top:10px;border-top:1px solid var(--border);
+             font-size:12px;color:var(--text-muted);}
+
+  /* ---------------- Wischgesten ----------------
+     Aufbau: .swipe-wrap enthält eine feste Hintergrundschicht (.swipe-bg) mit den
+     beiden Aktionen und darüber die eigentliche Zeile (.swipe-fg), die beim Wischen
+     seitlich verschoben wird und dabei die Aktion darunter freilegt.
+     touch-action:pan-y ist der entscheidende Teil: Senkrechtes Scrollen macht weiter
+     das Betriebssystem (bleibt also butterweich), waagerechtes übernehmen wir. */
+  .swipe-wrap{position:relative;overflow:hidden;border-radius:var(--radius-md);margin-bottom:8px;}
+  .swipe-bg{position:absolute;inset:0;display:flex;align-items:stretch;justify-content:space-between;
+            border-radius:var(--radius-md);overflow:hidden;}
+  /* Die farbige Fläche füllt die halbe Zeile, damit beim weiten Ziehen keine Lücke
+     entsteht. Die Beschriftung steckt aber in einem festen 80-px-Kästchen am äußeren
+     Rand - mit flex:1 stand sie sonst ganz außen und war beim Ziehen abgeschnitten
+     ("raucht ✕" statt "Verbraucht"). 80 px sind knapp schmaler als die Auslöse-
+     schwelle, die Aktion ist also lesbar, bevor sie greift. */
+  .swipe-act{display:flex;align-items:stretch;flex:1;color:#fff;}
+  .swipe-act.right{background:var(--danger);justify-content:flex-start;}
+  .swipe-act.left{background:var(--primary);justify-content:flex-end;}
+  .swipe-lab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+             width:80px;flex:none;font-size:11px;font-weight:700;line-height:1.15;text-align:center;
+             transition:transform .12s ease;}
+  .swipe-lab .swipe-icon{font-size:15px;line-height:1;}
+  /* Rückmeldung, sobald weit genug gezogen wurde: Die Aktion würde jetzt auslösen. */
+  .swipe-wrap.armed .swipe-lab{transform:scale(1.16);}
+  .swipe-fg{position:relative;background:var(--surface);will-change:transform;
+            touch-action:pan-y;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  .swipe-fg.snap{transition:transform .22s cubic-bezier(.22,.61,.36,1);}
+  /* Die Abstände wandern von der Zeile auf die Hülle, sonst entstehen doppelte Lücken. */
+  .swipe-wrap .item-row{margin-bottom:0;}
+  .swipe-wrap.card-gap{margin-bottom:14px;border-radius:var(--radius-lg);}
+  .swipe-wrap.card-gap .swipe-bg{border-radius:var(--radius-lg);}
+  /* Bewusst unauffällig: "lange haltbar" ist keine Warnung, sondern nur eine Einordnung. */
+  .badge.neutral{background:var(--bg);color:var(--text-muted);}
+
   /* Inventory */
   .cat-block{margin-bottom:18px;}
   .cat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
@@ -317,6 +361,43 @@
     padding:10px 12px;font-size:13px;font-style:italic;color:#6e6046;
   }
   .paper .paper-meta{display:flex;justify-content:center;gap:16px;font-size:12.5px;color:#8a8272;margin-top:4px;font-family:-apple-system,sans-serif;}
+  .paper .paper-foot{margin-top:18px;text-align:center;font-size:10.5px;letter-spacing:.16em;
+                     text-transform:uppercase;color:#b0a68d;font-family:-apple-system,sans-serif;}
+
+  /* ---------------- Drucklayout für die Rezeptkarte ----------------
+     Wird nur wirksam, während body die Klasse "printing-card" trägt. Alles außer der
+     Karte wird ausgeblendet, damit im PDF weder Menüleiste noch Knöpfe landen. Die
+     Karte selbst verliert Schatten und Ecken und füllt das Blatt.
+     "print-color-adjust:exact" sorgt dafür, dass der cremefarbene Untergrund und die
+     Rahmen auch wirklich gedruckt werden - Browser lassen Hintergründe sonst weg. */
+  @media print{
+    body.printing-card{background:#fff;}
+    body.printing-card > *{display:none !important;}
+    body.printing-card #recipeCardOverlay{
+      display:block !important;position:static !important;background:none !important;
+      opacity:1 !important;pointer-events:auto !important;
+    }
+    body.printing-card #recipeCardOverlay .sheet{
+      position:static !important;transform:none !important;box-shadow:none !important;
+      max-height:none !important;height:auto !important;overflow:visible !important;
+      border-radius:0 !important;padding:0 !important;background:none !important;
+      /* Ohne das bliebe die Karte auf 640 px stehen und säße schmal auf dem Blatt. */
+      width:100% !important;max-width:none !important;margin:0 !important;animation:none !important;
+    }
+    body.printing-card .no-print,
+    body.printing-card .sheet-handle,
+    body.printing-card .close-x{display:none !important;}
+    body.printing-card .paper{
+      box-shadow:none !important;border-radius:0 !important;margin:0 !important;
+      border:none !important;padding:0 !important;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    }
+    /* Schritte und Zutaten nicht mitten im Eintrag umbrechen. */
+    body.printing-card .paper-ing li,
+    body.printing-card .paper-steps li,
+    body.printing-card .paper-tip{break-inside:avoid;page-break-inside:avoid;}
+    @page{margin:14mm;}
+  }
 
   .btn{
     width:100%;padding:13px;border-radius:var(--radius-md);border:none;font-weight:700;font-size:14px;cursor:pointer;font-family:inherit;
@@ -341,8 +422,10 @@
     position:fixed;bottom:calc(var(--nav-h) + 16px);left:50%;transform:translateX(-50%);
     background:var(--text);color:#fff;padding:10px 18px;border-radius:999px;font-size:13px;font-weight:600;
     z-index:60;opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;
+    display:flex;align-items:center;max-width:calc(100vw - 32px);
   }
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+  /* pointer-events wieder an, sobald sichtbar - sonst wäre "Rückgängig" nicht tippbar. */
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);pointer-events:auto;}
 
   .empty{text-align:center;color:var(--text-muted);font-size:13px;padding:26px 10px;}
 
@@ -438,8 +521,12 @@
       <div class="section-title">Läuft bald ab</div>
       <div class="card" id="expiringCard"></div>
 
-      <div class="section-title">Deine Lieblingsgerichte</div>
-      <div class="card" id="favCard"></div>
+      <div class="section-title">Gesundheitstracker</div>
+      <p class="subtle" style="font-size:11.5px;margin:-6px 0 8px;">
+        Was steckt in dem, was du zuhause hast? Durchschnittswerte je 100&nbsp;g.
+      </p>
+      <div class="filter-row" id="trackerChips" style="margin-bottom:10px;"></div>
+      <div class="card" id="trackerCard"></div>
     </section>
 
     <!-- BESTAND -->
@@ -460,11 +547,12 @@
     <!-- REZEPTE -->
     <section class="view" id="view-rezepte">
       <h1 class="page-title">Rezepte</h1>
-      <p class="subtle">Rezeptideen für deinen Bestand – die Grundauswahl unten ist noch eine feste Beispiel-Liste. Für ein individuelles KI-Rezept nutz den Button oben.</p>
+      <p class="subtle">Sortiert nach dem, was du schon zuhause hast. Nach rechts wischen blendet ein Rezept aus, nach links notiert es die fehlenden Zutaten.</p>
       <button class="btn btn-outline" style="margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openIdeaSheet()">
         <span style="width:16px;height:16px;color:var(--primary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M5 5l2.5 2.5M16.5 16.5 19 19M3 12h4M17 12h4M5 19l2.5-2.5M16.5 7.5 19 5"/></svg></span> Eigene Rezeptidee
       </button>
       <div class="filter-row" id="filterRow"></div>
+      <p class="subtle" id="recipeDietNote" style="display:none;font-size:11.5px;margin:0 0 12px;"></p>
       <div id="recipeList"></div>
     </section>
 
@@ -552,6 +640,22 @@
 </div>
 
 <!-- Onboarding-Popup: einmalig beim allerersten Öffnen -->
+<div class="overlay" id="trackerOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <button class="close-x" onclick="closeSheet('trackerOverlay')">✕</button>
+    <div id="trackerSheetContent"></div>
+  </div>
+</div>
+
+<div class="overlay" id="nutritionOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <button class="close-x" onclick="closeSheet('nutritionOverlay')">✕</button>
+    <div id="nutritionSheetContent"></div>
+  </div>
+</div>
+
 <div class="overlay" id="onboardingOverlay">
   <div class="sheet" style="position:relative;">
     <div class="sheet-handle"></div>
@@ -568,10 +672,10 @@
   </div>
 </div>
 
-<!-- Haushalt-Sharing: Gründen/Beitreten. Kein ✕ oben - Entscheidung läuft bewusst über
-     den eigenen "Später"-Knopf im Inhalt, analog zum Onboarding-Popup. -->
+<!-- Gemeinsamer Haushalt: gründen/beitreten, oder jederzeit über die Einstellungen -->
 <div class="overlay" id="householdOverlay">
   <div class="sheet" style="position:relative;">
+    <button class="close-x" onclick="closeSheet('householdOverlay')">✕</button>
     <div class="sheet-handle"></div>
     <div id="householdSheetContent"></div>
   </div>
@@ -582,7 +686,7 @@
 <script>
 /* Wird bei jeder Auslieferung hochgezählt - so lässt sich in den Einstellungen
    sofort sehen, ob die neueste Version wirklich geladen wurde. */
-const APP_VERSION = '2026.08.21-1';
+const APP_VERSION = '2026.08.22-1';
 
 /* ---------------- Icons ---------------- */
 const ICONS = {
@@ -619,6 +723,11 @@ const state = {
   cookCounts: {},   // recipeId -> times "cooked"
   favorites: new Set(),
   customRecipes: [],   // per KI aus eigenen Rezeptideen erstellte Rezepte
+  // Nach links weggewischte Rezepte. Bewusst nur ausgeblendet und nicht gelöscht,
+  // damit ein Fehlwisch nichts kostet - zurückholen geht in den Einstellungen.
+  hiddenRecipes: [],
+  // Welcher Nährstoff im Gesundheitstracker gerade ausgewählt ist.
+  trackerNutrient: 'protein',
   // Schnellnotizen werden bewusst NICHT als Liste gespeichert/angezeigt - sie werden direkt
   // ausgewertet und in Bestand/Favoriten/Personalisierung übernommen, siehe applyNoteResult().
   shopping: {
@@ -647,15 +756,18 @@ const state = {
     dietType: [],                       // nur relevant falls Ziel "Gesünder ernähren" gewählt
     dietFocus: [],                      // nur relevant falls Ziel "Gesünder ernähren" gewählt
   },
-  // ---- Haushalt-Sharing (Familie/Freunde teilen sich Bestand + Einkaufsliste) ----
-  // Bleibt alles null/leer, solange niemand einen Haushalt gegründet hat oder
-  // beigetreten ist - die App funktioniert dann wie bisher rein lokal.
-  householdId: null,
-  memberId: null,
-  memberName: '',
-  household: { code: '', members: [] },  // members: [{id,name,color}], vom Server befüllt
-  lastSync: 0,                            // Zeitstempel (ms) des letzten erfolgreichen Sync
-  householdSetupAsked: false,             // true, sobald der Einrichten-Dialog einmal gezeigt/übersprungen wurde
+  // Gemeinsamer Haushalt (Familie/Freunde teilen sich einen Bestand über eine
+  // Datenbank). "asked": Setup-Sheet schon mal gezeigt oder übersprungen?
+  // "id"/"memberId" leer = App läuft weiterhin ganz normal offline-only lokal.
+  household: {
+    asked: false,
+    id: null,
+    memberId: null,
+    memberName: '',
+    code: '',
+    members: [],
+  },
+  lastSync: 0,   // Zeitstempel (ms) der letzten erfolgreichen Synchronisierung mit dem Haushalt
 };
 
 /* ---------------- Speicherung (localStorage) ----------------
@@ -670,10 +782,12 @@ function saveState(){
   try{
     const payload = {
       idCounter,
-      inventory: state.inventory.map(i => ({...i, expiry: i.expiry.toISOString()})),
+      inventory: state.inventory.map(i => ({...i, expiry: i.expiry ? i.expiry.toISOString() : null})),
       cookCounts: state.cookCounts,
       favorites: Array.from(state.favorites),
       customRecipes: state.customRecipes,
+      hiddenRecipes: state.hiddenRecipes,
+      trackerNutrient: state.trackerNutrient,
       shopping: state.shopping,
       filters: state.filters,
       theme: state.theme,
@@ -681,18 +795,102 @@ function saveState(){
       customAppliances: state.customAppliances,
       appliancesSet: state.appliancesSet,
       personalization: state.personalization,
-      householdId: state.householdId,
-      memberId: state.memberId,
-      memberName: state.memberName,
       household: state.household,
       lastSync: state.lastSync,
-      householdSetupAsked: state.householdSetupAsked,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }catch(e){
     // z.B. Safari Private Mode / Speicher voll - Zustand bleibt dann nur für diese Sitzung erhalten.
     console.warn('Konnte Zustand nicht speichern:', e);
   }
+}
+
+/* ---------------- Haltbarkeit einschätzen ----------------
+   Steht bewusst weit oben, weil schon loadState() beim Start damit arbeitet:
+   Beim Laden werden geratene Daten verpackter Ware entfernt.
+
+   Die Einschätzung ist eine einfache Stichwort-Tabelle und kein KI-Aufruf: sofort da
+   und auch ohne Internet verfügbar. */
+const SHELF_LIFE_HINTS = [
+  { days:3,   words:['salat','beere','erdbeer','himbeer','banane','pilz','champignon','spinat','rucola','kräuter','petersilie','basilikum'] },
+  { days:5,   words:['fisch','lachs','hack','geflügel','hähnchen','pute','fleisch','wurst','aufschnitt','brot','brötchen','sahne','frischkäse'] },
+  { days:8,   words:['milch','joghurt','quark','skyr','buttermilch','tofu','tomate','gurke','paprika','zucchini','brokkoli','avocado','trauben'] },
+  { days:14,  words:['käse','butter','margarine','apfel','birne','orange','zitrone','karotte','möhre','kohl','lauch','sellerie','hummus'] },
+  { days:21,  words:['ei','eier'] },
+  { days:60,  words:['kartoffel','zwiebel','knoblauch','kürbis','ingwer'] },
+  { days:180, words:['mehl','zucker','haferflocken','müsli','nudel','pasta','couscous','brühe','gewürz','backpulver','schokolade','keks','chips','nuss','mandel'] },
+  { days:365, words:['reis','linsen','bohnen','kichererbsen','quinoa','öl','essig','honig','marmelade','sirup','tee','kaffee','saft','wasser','cola','limo','pepsi'] },
+  { days:540, words:['dose','konserve','eingelegt','tiefkühl','tk','gefrier'] },
+];
+
+// Kurze Stichwörter (z.B. "ei") dürfen NICHT einfach als Teilstring gesucht werden -
+// sonst wird aus "Reis" ein Ei-Treffer (r-EI-s) und die Schätzung ist völlig daneben.
+// Deshalb: kurze Wörter nur als ganzes Wort oder als Wortende (deutsche Komposita wie
+// "Hühnerei" oder "Olivenöl"), längere Stichwörter ganz normal als Teilstring.
+function shelfWordMatches(normalizedName, word){
+  if(word.length > 3) return normalizedName.includes(word);
+  return normalizedName.split(/\s+/).some(part => part === word || part.endsWith(word));
+}
+
+/* Ab hier trennt die App zwei grundverschiedene Fälle - das ist wichtig für die
+   Ehrlichkeit der ganzen App:
+
+   FRISCHES (Obst, Gemüse, Fleisch, Fisch, Milchprodukte, Brot): Darauf steht oft gar
+   kein Datum oder eins, das vom Kaufzeitpunkt abhängt. Hier ist eine Schätzung eine
+   echte Hilfe - sie wird aber auch nur als grobe Ampel angezeigt, nie als Tageszahl.
+
+   VERPACKTES (Nudeln, Reis, Konserven, Mehl, Öl): Darauf steht ein exaktes, gedrucktes
+   Datum. Die App kann es nicht kennen. Also behauptet sie hier NICHTS und zeigt nur
+   "lange haltbar" an. Wer will, tippt das echte Datum von der Packung ein - dann ist
+   es eine Tatsache und darf voll für Warnungen und Rezeptvorschläge genutzt werden.
+
+   Unbekannte Namen gelten bewusst als "lange haltbar", also als "keine Aussage".
+   Lieber schweigen als raten. */
+const FRESH_MAX_DAYS = 60;
+
+/* Diese Wörter schlagen ALLES andere: Eine Dose Tomaten ist keine frische Tomate,
+   TK-Spinat kein frischer Spinat. Ohne diese Regel würde "Tomaten (Dose)" über das
+   Stichwort "tomate" als frisch gelten und die App würde vor etwas warnen, das noch
+   zwei Jahre hält - genau die Scheingenauigkeit, die wir loswerden wollen. */
+const PACKAGED_MARKERS = ['dose','konserve','eingelegt','tiefkuhl','tiefkühl','gefrier','glas','getrocknet','pulver','trocken'];
+
+function shelfInfo(name){
+  // ACHTUNG: Hier bewusst NICHT normName() verwenden. Das entfernt Klammer-Zusätze,
+  // damit "Eier (6er)" zu "Eier" passt - dabei ginge aber genau das "(Dose)" verloren,
+  // an dem wir verpackte Ware erkennen. Deshalb prüfen wir die Marker am Rohnamen.
+  const raw = String(name || '').toLowerCase();
+  if(raw){
+    if(PACKAGED_MARKERS.some(w => raw.includes(w))) return { fresh:false, days:null };
+    // "tk" nur als eigenes Wort ("TK-Spinat", "TK Erbsen") - sonst würde jedes Wort
+    // mit den Buchstaben tk darin fälschlich greifen.
+    if(raw.split(/[^a-zäöüß]+/).includes('tk')) return { fresh:false, days:null };
+  }
+  const n = normName(name);
+  if(n){
+    for(const group of SHELF_LIFE_HINTS){
+      if(group.words.some(w => shelfWordMatches(n, w))){
+        return group.days <= FRESH_MAX_DAYS
+          ? { fresh:true,  days:group.days }
+          : { fresh:false, days:null };
+      }
+    }
+  }
+  return { fresh:false, days:null };
+}
+
+function isFreshItem(name){ return shelfInfo(name).fresh; }
+
+// Gibt die geschätzten Tage zurück - oder null, wenn die App nichts wissen kann.
+function estimateShelfLife(name){ return shelfInfo(name).days; }
+
+// Datum für einen neu erfassten Artikel: nur bei frischer Ware, sonst null.
+// estDays darf von der KI kommen, wird aber nur bei frischer Ware und nur in einem
+// plausiblen Rahmen übernommen - sonst gewinnt die lokale Schätzung.
+function initialExpiry(name, estDays){
+  const info = shelfInfo(name);
+  if(!info.fresh) return null;
+  const d = Number(estDays);
+  return todayOffset(Number.isFinite(d) && d >= 1 && d <= 90 ? Math.round(d) : info.days);
 }
 
 function loadState(){
@@ -704,7 +902,16 @@ function loadState(){
 
     if(Number.isFinite(saved.idCounter)) idCounter = saved.idCounter;
     if(Array.isArray(saved.inventory)){
-      state.inventory = saved.inventory.map(i => ({...i, expiry: new Date(i.expiry)}));
+      state.inventory = saved.inventory.map(i => {
+        const d = i.expiry ? new Date(i.expiry) : null;
+        const item = {...i, expiry: (d && !isNaN(d.getTime())) ? d : null, exact: Boolean(i.exact)};
+        // Migration: Ältere Versionen haben auch verpackter Ware ein Datum angedichtet
+        // ("Reis läuft in 365 Tagen ab"). Das war eine erfundene Zahl - bei verpackten
+        // Sachen steht das echte Datum auf der Packung. Solche geratenen Daten fliegen
+        // hier raus; selbst eingetragene (exact) bleiben natürlich erhalten.
+        if(!item.exact && !isFreshItem(item.name)) item.expiry = null;
+        return item;
+      });
       // Migration: Die früheren Demo-Artikel aus der Prototyp-Zeit (feste IDs 1-12 mit
       // genau diesen Namen) auch aus gespeicherten Beständen entfernen. Echte, per Foto
       // oder Notiz erfasste Artikel haben IDs ab 101 und sind daher nicht betroffen.
@@ -714,6 +921,11 @@ function loadState(){
     if(saved.cookCounts && typeof saved.cookCounts === 'object') state.cookCounts = saved.cookCounts;
     if(Array.isArray(saved.favorites)) state.favorites = new Set(saved.favorites);
     if(Array.isArray(saved.customRecipes)) state.customRecipes = saved.customRecipes;
+    if(Array.isArray(saved.hiddenRecipes)) state.hiddenRecipes = saved.hiddenRecipes.filter(x=>typeof x === 'string');
+    // Hier wird der Wert nur übernommen, NICHT geprüft: NUTRIENTS entsteht erst weiter
+    // unten im Code, und loadState() läuft direkt danach. Ob der Nährstoff überhaupt
+    // (noch) existiert, klärt trackerNutrient() beim ersten Zeichnen.
+    if(typeof saved.trackerNutrient === 'string') state.trackerNutrient = saved.trackerNutrient;
     // saved.notes (aus älteren Versionen) wird bewusst nicht mehr übernommen - die
     // Notizenliste gibt es nicht mehr, siehe Kommentar beim state-Objekt oben.
     if(saved.shopping && typeof saved.shopping === 'object'){
@@ -726,21 +938,18 @@ function loadState(){
     }
     if(saved.filters && typeof saved.filters === 'object') state.filters = saved.filters;
     if(saved.personalization && typeof saved.personalization === 'object') state.personalization = {...state.personalization, ...saved.personalization};
+    // Haushalt: nur übernehmen, wenn es wirklich wie ein gültiger Haushalt aussieht -
+    // sonst bleibt die App einfach beim leeren Ausgangszustand (lokal, allein nutzbar).
+    if(saved.household && typeof saved.household === 'object'){
+      state.household = {...state.household, ...saved.household};
+      if(!Array.isArray(state.household.members)) state.household.members = [];
+    }
+    if(Number.isFinite(saved.lastSync)) state.lastSync = saved.lastSync;
     if(saved.theme === 'oliv' || saved.theme === 'blau') state.theme = saved.theme;
     if(Array.isArray(saved.appliances)) state.appliances = saved.appliances.filter(a=>typeof a === 'string');
     if(Array.isArray(saved.customAppliances)) state.customAppliances = saved.customAppliances.filter(a=>typeof a === 'string');
     if(typeof saved.appliancesSet === 'boolean') state.appliancesSet = saved.appliancesSet;
-    if(typeof saved.householdId === 'string') state.householdId = saved.householdId;
-    if(typeof saved.memberId === 'string') state.memberId = saved.memberId;
-    if(typeof saved.memberName === 'string') state.memberName = saved.memberName;
-    if(saved.household && typeof saved.household === 'object'){
-      state.household = {
-        code: typeof saved.household.code === 'string' ? saved.household.code : '',
-        members: Array.isArray(saved.household.members) ? saved.household.members : [],
-      };
-    }
-    if(Number.isFinite(saved.lastSync)) state.lastSync = saved.lastSync;
-    if(typeof saved.householdSetupAsked === 'boolean') state.householdSetupAsked = saved.householdSetupAsked;
+
     return true;
   }catch(e){
     console.warn('Konnte gespeicherten Zustand nicht laden:', e);
@@ -757,97 +966,179 @@ const hadSavedState = loadState();
    - "tip" ist ein kleiner Extra-Tipp für die Rezeptkarte */
 const RECIPE_POOL = [
   {
-    id:'rc1', name:'Linsen-Spinat-Curry', tags:['Vegan','Proteinreich'], time:25, kcal:410, protein:22, portions:2,
-    summary:'Zwiebeln und Currypaste anrösten, Linsen in Kokosmilch weich köcheln, Spinat unterheben – cremiges Curry in einem Topf.',
-    needs:['Rote Linsen','Spinat','Zwiebeln'], missing:['Kokosmilch','Currypaste'],
-    ingredients:['180 g rote Linsen','150 g Spinat (frisch oder TK)','2 Zwiebeln','400 ml Kokosmilch','1–2 EL rote Currypaste','1 EL Öl','350 ml Wasser','Salz & Pfeffer'],
+    id:'r-feta-nudeln', name:'Ofen-Feta-Nudeln', tags:['Vegetarisch'], time:30, kcal:520, protein:20, portions:2,
+    summary:'Feta und Tomaten wandern zusammen in den Ofen, werden zerdrückt und ergeben ganz von selbst eine cremige Sauce für die Nudeln.',
+    needs:['Nudeln','Feta','Tomaten','Knoblauch'], missing:[],
+    ingredients:['250 g Nudeln','200 g Feta (ein Block)','400 g kleine Tomaten','2 Zehen Knoblauch','3 EL Olivenöl','Salz & Pfeffer','frisches Basilikum, wenn da'],
     steps:[
-      'Die Zwiebeln schälen, fein würfeln und in einem Topf mit 1 EL Öl bei mittlerer Hitze 3–4 Minuten glasig anschwitzen, bis sie leicht goldig duften.',
-      'Die Currypaste dazugeben und etwa 1 Minute mitrösten – dadurch entfalten sich die Aromen deutlich besser, als wenn man sie nur einrührt.',
-      'Die Linsen kurz in einem Sieb abspülen, dann zusammen mit der Kokosmilch und dem Wasser in den Topf geben. Einmal aufkochen lassen.',
-      'Bei kleiner Hitze offen ca. 12–15 Minuten köcheln lassen und zwischendurch umrühren, damit nichts ansetzt. Die Linsen sollen weich sein, aber noch leichten Biss haben.',
-      'Den Spinat unterheben und nur 2–3 Minuten zusammenfallen lassen, damit er schön grün bleibt.',
-      'Mit Salz und Pfeffer abschmecken. Wenn das Curry zu dick ist, einfach einen Schluck Wasser einrühren.'
+      'Den Ofen auf 200 °C Ober-/Unterhitze vorheizen.',
+      'Die Tomaten waschen und in eine Auflaufform geben. Den Feta-Block in die Mitte setzen, sodass die Tomaten ihn umgeben.',
+      'Alles mit dem Olivenöl übergießen, salzen und pfeffern. Die Knoblauchzehen ungeschält dazulegen – sie werden im Ofen mild und süß.',
+      'Etwa 25 Minuten backen, bis die Tomaten aufgeplatzt sind und der Feta an den Rändern goldene Stellen hat.',
+      'In der Zwischenzeit die Nudeln in reichlich gesalzenem Wasser nach Packungsanleitung garen. Vor dem Abgießen eine Tasse Nudelwasser aufheben.',
+      'Die Form aus dem Ofen holen. Den Knoblauch aus der Schale drücken und alles mit einer Gabel zu einer Sauce zerdrücken.',
+      'Die abgetropften Nudeln unterheben. Ist die Sauce zu dick, löffelweise Nudelwasser einrühren, bis sie schön cremig am Teig haftet.'
     ],
-    tip:'Dazu passt Reis oder ein Stück Fladenbrot. Ein Spritzer Zitrone am Ende macht das Curry frischer.'
+    tip:'Das Nudelwasser ist der eigentliche Trick: Die Stärke darin bindet die Sauce, damit sie an den Nudeln haftet statt in der Schüssel zu stehen.'
   },
   {
-    id:'rc2', name:'Kichererbsen-Bowl mit Joghurt-Dip', tags:['Vegetarisch','Proteinreich','Schnell'], time:20, kcal:380, protein:19, portions:2,
-    summary:'Kichererbsen knusprig anbraten, mit frischer Paprika auf Zitronen-Joghurt anrichten – schnelle, warme Bowl.',
-    needs:['Kichererbsen (Dose)','Naturjoghurt','Paprika'], missing:['Zitrone'],
-    ingredients:['1 Dose Kichererbsen (ca. 400 g)','200 g Naturjoghurt','1 rote Paprika','½ Zitrone (Saft)','1 EL Öl','1 TL Paprikapulver','½ TL Kreuzkümmel (wenn da)','Salz & Pfeffer'],
+    id:'r-shakshuka', name:'Shakshuka', tags:['Vegetarisch','Proteinreich','Schnell'], time:25, kcal:380, protein:21, portions:2,
+    summary:'Eier ziehen in einer würzigen Tomaten-Paprika-Sauce gar – ein Pfannengericht, das zu jeder Tageszeit passt.',
+    needs:['Eier','Tomaten (Dose)','Paprika','Zwiebeln'], missing:[],
+    ingredients:['4 Eier','1 Dose stückige Tomaten (400 g)','1 rote Paprika','1 Zwiebel','2 Zehen Knoblauch','1 TL Paprikapulver edelsüß','½ TL Kreuzkümmel','2 EL Olivenöl','Salz & Pfeffer','Brot zum Dippen'],
     steps:[
-      'Die Kichererbsen in ein Sieb geben, gründlich abspülen und gut abtropfen lassen – je trockener sie sind, desto knuspriger werden sie.',
-      'Öl in einer Pfanne bei mittlerer bis hoher Hitze erwärmen. Die Kichererbsen mit Paprikapulver, Kreuzkümmel und etwas Salz 6–8 Minuten anbraten, dabei nur gelegentlich schwenken, bis sie goldbraun sind.',
-      'Währenddessen die Paprika waschen, entkernen und in schmale Streifen schneiden.',
-      'Für den Dip den Joghurt mit dem Zitronensaft, einer Prise Salz und Pfeffer glatt rühren.',
-      'Alles in einer Schüssel anrichten: unten der Joghurt-Dip, darauf die warmen Kichererbsen und die Paprikastreifen.'
+      'Die Zwiebel in feine Streifen schneiden, die Paprika entkernen und ebenfalls in Streifen schneiden.',
+      'Das Öl in einer weiten Pfanne bei mittlerer Hitze erwärmen. Zwiebel und Paprika 6–8 Minuten braten, bis die Paprika weich wird und die Zwiebel Farbe bekommt.',
+      'Den gehackten Knoblauch, Paprikapulver und Kreuzkümmel dazugeben und eine knappe Minute mitrösten – nicht länger, sonst werden die Gewürze bitter.',
+      'Die Tomaten dazugießen, salzen und pfeffern. Bei kleiner Hitze 8–10 Minuten offen einkochen lassen, bis die Sauce merklich dicker wird.',
+      'Mit einem Löffel vier Mulden in die Sauce drücken und in jede ein Ei aufschlagen.',
+      'Einen Deckel auflegen und 5–7 Minuten bei kleiner Hitze garen, bis das Eiweiß fest, das Eigelb aber noch weich ist. Ab Minute 5 lieber einmal zu oft nachschauen.',
+      'Direkt in der Pfanne servieren, mit Brot zum Auftunken.'
     ],
-    tip:'Wer mag, streut noch frische Kräuter (Petersilie oder Minze) darüber – auch getrocknete funktionieren.'
+    tip:'Die Sauce muss vor den Eiern richtig dick sein. Ist sie noch wässrig, sinken die Eier ein und werden ungleichmäßig gar.'
   },
   {
-    id:'rc3', name:'Gebratener Tofu mit Gemüsereis', tags:['Vegan','Proteinreich'], time:30, kcal:450, protein:26, portions:2,
-    summary:'Tofu goldbraun braten, Gemüse dazu, mit Ingwer-Sojasauce abschmecken und auf Reis servieren.',
-    needs:['Tofu','Reis','Paprika','Zwiebeln'], missing:['Sojasauce','Ingwer'],
-    ingredients:['400 g Tofu (natur oder geräuchert)','150 g Reis','1 Paprika','1 Zwiebel','3 EL Sojasauce','1 daumengroßes Stück Ingwer','2 EL Öl'],
+    id:'r-champignon-nudeln', name:'Cremige Champignon-Nudeln', tags:['Vegetarisch','Schnell'], time:20, kcal:540, protein:18, portions:2,
+    summary:'Champignons scharf anbraten, mit Sahne ablöschen, Nudeln unterheben – in zwanzig Minuten fertig und immer ein Treffer.',
+    needs:['Nudeln','Champignons','Sahne','Zwiebeln'], missing:[],
+    ingredients:['250 g Nudeln','300 g Champignons','150 ml Sahne','1 Zwiebel','2 Zehen Knoblauch','2 EL Öl','50 g geriebener Käse','Salz, Pfeffer & Muskat','Petersilie, wenn da'],
     steps:[
-      'Den Reis nach Packungsanleitung in gesalzenem Wasser kochen (meist ca. 12–15 Minuten) und danach zugedeckt ziehen lassen.',
-      'Den Tofu zwischen Küchenpapier kurz ausdrücken – so wird er beim Braten deutlich knuspriger. Dann in ca. 2 cm große Würfel schneiden.',
-      'Öl in einer großen Pfanne stark erhitzen. Die Tofuwürfel darin 6–8 Minuten goldbraun braten und erst wenden, wenn sich eine Kruste gebildet hat.',
-      'Zwiebel und Paprika in Streifen schneiden, zum Tofu geben und 3–4 Minuten mitbraten, bis das Gemüse leicht Farbe bekommt, aber noch Biss hat.',
-      'Den Ingwer fein reiben oder hacken, mit der Sojasauce in die Pfanne geben und alles einmal kräftig durchschwenken, sodass sich die Sauce überall verteilt.',
-      'Den Reis auflockern, auf Teller verteilen und die Tofu-Gemüse-Pfanne darüber anrichten.'
+      'Die Nudeln in gesalzenem Wasser nach Packungsanleitung garen. Eine Tasse Nudelwasser aufheben.',
+      'Die Champignons trocken mit Küchenpapier abreiben statt zu waschen – nasse Pilze braten nicht, sie kochen. In Scheiben schneiden.',
+      'Das Öl in einer großen Pfanne richtig heiß werden lassen. Die Pilze hineingeben und zwei Minuten NICHT umrühren, damit sie Farbe bekommen.',
+      'Jetzt wenden und weitere 3–4 Minuten braten, bis alle Flüssigkeit verdampft und die Pilze goldbraun sind. Erst dann salzen.',
+      'Die fein gewürfelte Zwiebel und den Knoblauch dazugeben und 2 Minuten mitbraten.',
+      'Mit der Sahne ablöschen, den Käse einrühren und mit Pfeffer und einer Prise Muskat abschmecken.',
+      'Die Nudeln unterheben und mit etwas Nudelwasser auf die gewünschte Konsistenz bringen.'
     ],
-    tip:'Ein Klecks Erdnussmus in die Sauce gerührt macht daraus im Handumdrehen ein Erdnuss-Curry-Aroma.'
+    tip:'Salz erst am Ende an die Pilze: Salzt man früher, ziehen sie Wasser und werden weich statt knusprig.'
   },
   {
-    id:'rc4', name:'Overnight Oats mit Joghurt', tags:['Vegetarisch','Schnell'], time:10, kcal:340, protein:15, portions:2,
-    summary:'Haferflocken mit Joghurt und Milch verrühren, über Nacht in den Kühlschrank, morgens Beeren drauf – fertig.',
-    needs:['Haferflocken','Naturjoghurt','Milch'], missing:['Beeren'],
-    ingredients:['100 g Haferflocken','200 g Naturjoghurt','150 ml Milch','1 Handvoll Beeren (frisch oder TK)','1 TL Honig oder Ahornsirup (optional)','1 Prise Zimt'],
+    id:'r-haehnchenpfanne', name:'Hähnchen-Gemüse-Pfanne mit Reis', tags:['Proteinreich'], time:30, kcal:480, protein:34, portions:2,
+    summary:'Hähnchen goldbraun braten, buntes Gemüse dazu, mit Sojasauce und Honig glasieren – eine Pfanne, ein Teller, alles drin.',
+    needs:['Hähnchenbrust','Reis','Paprika','Zwiebeln','Karotten'], missing:['Sojasauce'],
+    ingredients:['300 g Hähnchenbrust','150 g Reis','1 Paprika','1 Zwiebel','2 Karotten','3 EL Sojasauce','1 TL Honig','1 Stück Ingwer (daumengroß)','2 EL Öl','Pfeffer'],
     steps:[
-      'Haferflocken, Joghurt und Milch in einer Schüssel oder einem Glas mit Deckel gut verrühren, bis keine trockenen Flocken mehr zu sehen sind.',
-      'Nach Geschmack mit Honig oder Ahornsirup leicht süßen und eine Prise Zimt unterrühren.',
-      'Abgedeckt über Nacht (mindestens aber 4 Stunden) in den Kühlschrank stellen – die Flocken saugen sich voll und werden wunderbar cremig.',
-      'Am Morgen einmal umrühren. Ist die Masse zu fest, einfach einen Schluck Milch unterrühren.',
-      'Mit den Beeren toppen. Tiefkühl-Beeren am besten schon am Vorabend mit ins Glas geben, dann tauen sie über Nacht auf und geben schönen Saft ab.'
+      'Den Reis in gesalzenem Wasser nach Packungsanleitung garen und zugedeckt ziehen lassen.',
+      'Das Hähnchen in mundgerechte Streifen schneiden. Das Gemüse waschen und in ähnlich große Stücke schneiden, damit alles gleichzeitig gar wird.',
+      'Einen Esslöffel Öl in einer großen Pfanne stark erhitzen. Das Hähnchen hineingeben und 5–6 Minuten braten, bis es rundum goldbraun ist. Herausnehmen und beiseitestellen.',
+      'Das restliche Öl in dieselbe Pfanne geben. Karotten und Zwiebel 3 Minuten anbraten, dann die Paprika dazugeben und weitere 3 Minuten braten – das Gemüse soll knackig bleiben.',
+      'Den geriebenen Ingwer kurz mitrösten. Das Hähnchen zurück in die Pfanne geben.',
+      'Sojasauce und Honig verrühren, darübergießen und alles 1–2 Minuten schwenken, bis eine glänzende Glasur entsteht.',
+      'Mit Pfeffer abschmecken und auf dem Reis anrichten. Salz braucht es meist nicht mehr, die Sojasauce bringt genug mit.'
     ],
-    tip:'Hält sich abgedeckt 2 Tage im Kühlschrank – lohnt sich also, gleich die doppelte Menge zu machen.'
+    tip:'Das Fleisch zuerst allein braten und wieder herausnehmen. Kommt es gleichzeitig mit dem Gemüse in die Pfanne, kühlt sie zu stark ab und alles gart im eigenen Saft.'
   },
   {
-    id:'rc5', name:'Nudeln mit Spinat-Ei-Sauce', tags:['Vegetarisch'], time:22, kcal:520, protein:24, portions:2,
-    summary:'Nudeln kochen, Spinat andünsten, heiße Nudeln mit Ei-Parmesan-Mix cremig verrühren – wie Carbonara, nur grüner.',
-    needs:['Vollkornnudeln','Spinat','Eier (6er)'], missing:['Parmesan'],
-    ingredients:['250 g Vollkornnudeln','200 g Spinat','3 Eier','40 g Parmesan (gerieben)','1 EL Öl oder Butter','1 kleine Knoblauchzehe (wenn da)','Salz & Pfeffer'],
+    id:'r-lachs-blech', name:'Lachs vom Blech mit Kartoffeln', tags:['Proteinreich'], time:35, kcal:560, protein:38, portions:2,
+    summary:'Kartoffeln vorbacken, Lachs und Zitrone dazulegen, fertig backen – ein Blech, kaum Arbeit, sieht aus wie im Restaurant.',
+    needs:['Lachs','Kartoffeln','Zitrone','Brokkoli'], missing:[],
+    ingredients:['2 Lachsfilets (je ca. 150 g)','600 g Kartoffeln','1 Zitrone','300 g Brokkoli','3 EL Olivenöl','Salz & Pfeffer','getrockneter Thymian oder Dill'],
     steps:[
-      'Die Nudeln in reichlich gesalzenem Wasser nach Packungsanleitung bissfest kochen. Kurz vor dem Abgießen eine Tasse Nudelwasser beiseitestellen.',
-      'Währenddessen die Eier mit dem geriebenen Parmesan, Salz und ordentlich Pfeffer in einer Schüssel verquirlen.',
-      'Öl oder Butter in einer großen Pfanne erhitzen, nach Belieben den gehackten Knoblauch kurz anschwitzen und den Spinat bei mittlerer Hitze 2–3 Minuten zusammenfallen lassen.',
-      'Die abgegossenen, noch heißen Nudeln direkt in die Pfanne zum Spinat geben und die Pfanne vom Herd ziehen.',
-      'Die Ei-Parmesan-Mischung zügig unterrühren – die Resthitze lässt sie cremig stocken, ohne dass Rührei entsteht. Bei Bedarf schluckweise Nudelwasser dazu, bis die Sauce seidig ist.',
-      'Sofort servieren, mit extra Parmesan und Pfeffer bestreut.'
+      'Den Ofen auf 200 °C Ober-/Unterhitze vorheizen.',
+      'Die Kartoffeln waschen und in etwa 2 cm große Würfel oder Spalten schneiden – die Schale kann dranbleiben.',
+      'Mit 2 EL Öl, Salz und Pfeffer auf einem Blech mischen und gleichmäßig verteilen. 20 Minuten backen.',
+      'Währenddessen den Brokkoli in Röschen teilen und den Lachs trocken tupfen, salzen und pfeffern.',
+      'Das Blech herausnehmen, die Kartoffeln zur Seite schieben und Lachs und Brokkoli daneben verteilen. Beides mit dem restlichen Öl beträufeln.',
+      'Ein paar dünne Zitronenscheiben auf den Lachs legen und mit Thymian oder Dill bestreuen.',
+      'Weitere 12–14 Minuten backen. Der Lachs ist fertig, wenn er sich mit der Gabel leicht in Segmente teilen lässt und innen noch glänzend ist.'
     ],
-    tip:'Wichtig ist, die Eier NICHT auf der heißen Herdplatte unterzurühren – sonst gibt es Rührei statt cremiger Sauce.'
+    tip:'Lieber eine Minute zu früh aus dem Ofen als eine zu spät – Lachs gart auf dem heißen Blech noch nach und wird sonst trocken.'
   },
   {
-    id:'rc6', name:'Zwiebel-Linsen-Eintopf', tags:['Vegan','Proteinreich'], time:35, kcal:390, protein:21, portions:2,
-    summary:'Zwiebeln und Paprika anschwitzen, Linsen in Brühe 20 Minuten köcheln, abschmecken – wärmender Eintopf aus einem Topf.',
-    needs:['Rote Linsen','Zwiebeln','Paprika'], missing:['Gemüsebrühe'],
-    ingredients:['200 g rote Linsen','2 Zwiebeln','1 Paprika','800 ml Gemüsebrühe','1 EL Öl','1 TL Paprikapulver','1 Lorbeerblatt (wenn da)','Salz, Pfeffer & ein Spritzer Essig'],
+    id:'r-dal', name:'Rote-Linsen-Dal mit Kokosmilch', tags:['Vegan','Proteinreich','Schnell'], time:25, kcal:430, protein:20, portions:2,
+    summary:'Linsen köcheln in Kokosmilch weich und binden die Sauce ganz von selbst – ein Topf, kein Rühren nötig, sättigt richtig.',
+    needs:['Rote Linsen','Zwiebeln','Knoblauch'], missing:['Kokosmilch'],
+    ingredients:['180 g rote Linsen','400 ml Kokosmilch','300 ml Wasser','1 Zwiebel','2 Zehen Knoblauch','1 Stück Ingwer (daumengroß)','2 TL Currypulver','1 EL Öl','Salz','½ Zitrone'],
     steps:[
-      'Die Zwiebeln würfeln und in einem großen Topf mit dem Öl bei mittlerer Hitze 4–5 Minuten anschwitzen, bis sie weich und leicht gebräunt sind – das gibt dem Eintopf seine Grundsüße.',
-      'Die Paprika würfeln, dazugeben und 2–3 Minuten mitbraten. Das Paprikapulver einrühren und nur kurz mitrösten, damit es nicht bitter wird.',
-      'Die abgespülten Linsen und die Gemüsebrühe dazugeben, nach Belieben ein Lorbeerblatt hinein, und alles einmal aufkochen.',
-      'Bei kleiner Hitze 20 Minuten sanft köcheln lassen und ab und zu umrühren. Die Linsen zerfallen dabei teilweise und binden den Eintopf ganz von selbst.',
-      'Das Lorbeerblatt entfernen. Mit Salz, Pfeffer und einem kleinen Spritzer Essig abschmecken – die Säure hebt den Geschmack deutlich.',
-      'Wer es sämiger mag, püriert ein Drittel des Eintopfs kurz mit dem Stabmixer und rührt es zurück.'
+      'Die Zwiebel fein würfeln und im Öl bei mittlerer Hitze 4 Minuten glasig anschwitzen.',
+      'Knoblauch und Ingwer fein hacken, dazugeben und eine Minute mitbraten, bis es duftet.',
+      'Das Currypulver einrühren und 30 Sekunden mitrösten – im Öl entfaltet es viel mehr Aroma als später in der Flüssigkeit.',
+      'Die Linsen kurz abspülen und mit Kokosmilch und Wasser dazugeben. Einmal aufkochen lassen.',
+      'Bei kleiner Hitze 15 Minuten offen köcheln, dabei zwei- bis dreimal umrühren. Die Linsen zerfallen und binden das Dal ganz von allein.',
+      'Mit Salz und einem kräftigen Spritzer Zitrone abschmecken. Die Säure ist wichtig, sonst schmeckt es flach.',
+      'Ist es zu dick, einen Schluck Wasser einrühren; ist es zu dünn, einfach ein paar Minuten weiterköcheln.'
     ],
-    tip:'Schmeckt am nächsten Tag aufgewärmt fast noch besser und lässt sich gut einfrieren.'
+    tip:'Dazu passt Reis oder Fladenbrot. Am nächsten Tag ist es noch besser – dann eventuell etwas Wasser beim Aufwärmen zugeben.'
+  },
+  {
+    id:'r-gebratener-reis', name:'Gebratener Reis mit Ei', tags:['Vegetarisch','Schnell'], time:15, kcal:450, protein:17, portions:2,
+    summary:'Der beste Weg, Reste zu verwerten: kalter Reis, Ei und was das Gemüsefach hergibt, scharf angebraten.',
+    needs:['Reis','Eier','Erbsen','Karotten','Zwiebeln'], missing:['Sojasauce'],
+    ingredients:['400 g gekochter Reis vom Vortag','3 Eier','150 g Erbsen (TK)','2 Karotten','1 Zwiebel','3 EL Sojasauce','2 EL Öl','1 TL Sesamöl, wenn da','Pfeffer','Frühlingszwiebeln, wenn da'],
+    steps:[
+      'Am besten funktioniert kalter Reis vom Vortag: Er ist trockener und die Körner kleben nicht. Frisch gekochter Reis wird beim Braten leicht matschig.',
+      'Die Karotten und die Zwiebel klein würfeln.',
+      'Die Eier verquirlen und in einer heißen, geölten Pfanne zu Rührei stocken lassen. Herausnehmen und beiseitestellen.',
+      'Das restliche Öl in dieselbe Pfanne geben und stark erhitzen. Zwiebel und Karotten 3 Minuten braten, dann die Erbsen dazugeben.',
+      'Den Reis dazugeben und mit dem Pfannenwender auseinanderdrücken. 3–4 Minuten braten, dabei nur gelegentlich wenden, damit er unten leicht anröstet.',
+      'Das Rührei zurückgeben, mit Sojasauce und Pfeffer würzen und alles gut durchmischen.',
+      'Vom Herd nehmen und, wenn vorhanden, mit einem Spritzer Sesamöl und Frühlingszwiebeln abschließen.'
+    ],
+    tip:'Die Pfanne darf richtig heiß sein und sollte nicht überfüllt werden. Lieber in zwei Durchgängen braten – sonst dünstet der Reis statt zu rösten.'
+  },
+  {
+    id:'r-ofengemuese', name:'Ofengemüse mit Kichererbsen', tags:['Vegan','Proteinreich'], time:35, kcal:410, protein:18, portions:2,
+    summary:'Alles auf ein Blech, in den Ofen, fertig. Die Kichererbsen werden dabei knusprig und machen richtig satt.',
+    needs:['Kichererbsen (Dose)','Kartoffeln','Paprika','Zwiebeln','Zucchini'], missing:[],
+    ingredients:['1 Dose Kichererbsen (400 g)','400 g Kartoffeln','1 Paprika','1 Zucchini','1 rote Zwiebel','3 EL Olivenöl','2 TL Paprikapulver','1 TL Oregano','Salz & Pfeffer'],
+    steps:[
+      'Den Ofen auf 210 °C Ober-/Unterhitze vorheizen.',
+      'Die Kichererbsen abspülen, gut abtropfen lassen und mit Küchenpapier trocken tupfen – trocken werden sie knusprig, nass bleiben sie weich.',
+      'Kartoffeln in kleine Würfel schneiden, Paprika, Zucchini und Zwiebel in etwas größere Stücke. Kartoffeln brauchen am längsten, deshalb dürfen sie am kleinsten sein.',
+      'Alles zusammen mit den Kichererbsen auf einem Blech mit Öl, Paprikapulver, Oregano, Salz und Pfeffer vermengen.',
+      'In einer einzigen Schicht verteilen. Liegt das Gemüse übereinander, dünstet es statt zu rösten – im Zweifel zwei Bleche nehmen.',
+      '25–30 Minuten backen und nach der Hälfte einmal wenden.',
+      'Fertig ist es, wenn die Kartoffeln außen goldbraun sind und sich mit der Gabel leicht einstechen lassen.'
+    ],
+    tip:'Dazu passt ein Klecks Joghurt oder Hummus. Reste schmecken am nächsten Tag kalt als Salat ausgezeichnet.'
+  },
+  {
+    id:'r-kartoffelsuppe', name:'Kartoffel-Lauch-Suppe', tags:['Vegan'], time:30, kcal:320, protein:9, portions:2,
+    summary:'Wenige Zutaten, viel Wärme: Kartoffeln und Lauch in Brühe weich kochen und cremig pürieren.',
+    needs:['Kartoffeln','Lauch','Zwiebeln'], missing:['Gemüsebrühe'],
+    ingredients:['600 g Kartoffeln (mehligkochend)','1 Stange Lauch','1 Zwiebel','800 ml Gemüsebrühe','1 EL Öl','Salz, Pfeffer & Muskat','1 TL Essig oder Zitronensaft'],
+    steps:[
+      'Den Lauch längs aufschneiden und unter fließendem Wasser gut auswaschen – zwischen den Schichten sitzt oft Erde. Dann in Ringe schneiden.',
+      'Die Kartoffeln schälen und würfeln, die Zwiebel fein hacken.',
+      'Öl in einem Topf erhitzen und Zwiebel und Lauch bei mittlerer Hitze 5 Minuten anschwitzen, ohne dass sie Farbe nehmen.',
+      'Die Kartoffeln dazugeben, mit der Brühe aufgießen und einmal aufkochen lassen.',
+      'Zugedeckt 15–18 Minuten köcheln, bis die Kartoffeln sehr weich sind und beim Draufdrücken zerfallen.',
+      'Mit dem Stabmixer fein pürieren. Mehligkochende Kartoffeln machen die Suppe von selbst sämig, Sahne braucht es nicht.',
+      'Mit Salz, Pfeffer, etwas Muskat und einem Spritzer Essig abschmecken.'
+    ],
+    tip:'Ein kleiner Teil des Lauchs, separat in Öl knusprig gebraten und obenauf gestreut, macht aus der einfachen Suppe etwas Besonderes.'
+  },
+  {
+    id:'r-hackpfanne', name:'Schnelle Hackpfanne mit Paprika', tags:['Proteinreich','Schnell'], time:25, kcal:490, protein:31, portions:2,
+    summary:'Hackfleisch krümelig braten, Paprika und Tomaten dazu, kräftig würzen – sättigend und in einer Pfanne erledigt.',
+    needs:['Hackfleisch','Paprika','Zwiebeln','Tomaten (Dose)'], missing:[],
+    ingredients:['400 g Hackfleisch','2 Paprika','1 Zwiebel','1 Dose stückige Tomaten (400 g)','2 Zehen Knoblauch','1 EL Tomatenmark','1 TL Paprikapulver','1 EL Öl','Salz & Pfeffer'],
+    steps:[
+      'Die Pfanne mit dem Öl richtig heiß werden lassen, bevor das Hack hineinkommt.',
+      'Das Hackfleisch hineingeben und zunächst eine Minute liegen lassen, damit es Farbe bekommt. Erst dann mit dem Pfannenwender krümelig zerteilen und insgesamt 6–8 Minuten braun braten.',
+      'Die gewürfelte Zwiebel dazugeben und 3 Minuten mitbraten, dann den gehackten Knoblauch kurz mitziehen lassen.',
+      'Das Tomatenmark und das Paprikapulver einrühren und eine Minute mitrösten – das nimmt dem Tomatenmark die Säure.',
+      'Die in Streifen geschnittene Paprika dazugeben und 3 Minuten anbraten.',
+      'Die Tomaten angießen, salzen und pfeffern und alles bei mittlerer Hitze 8 Minuten offen einkochen, bis die Sauce nicht mehr wässrig ist.',
+      'Abschmecken. Dazu passen Reis, Nudeln oder einfach Brot.'
+    ],
+    tip:'Nicht zu früh umrühren. Hackfleisch braucht Kontakt zur heißen Pfanne, sonst wird es grau und schmeckt gekocht statt gebraten.'
   },
 ];
 
 // Eingebaute Rezepte + selbst per KI erstellte Ideen zusammen
 function allRecipes(){ return RECIPE_POOL.concat(state.customRecipes); }
+
+/* Migration: Die alten Beispielrezepte (rc1-rc6) wurden durch eine neue Auswahl
+   ersetzt. Gespeicherte Favoriten und Kochzähler, die noch auf sie zeigen, laufen ins
+   Leere - sonst zählt die Startseite Lieblingsgerichte mit, die es nicht mehr gibt.
+   Läuft hier und nicht in loadState(), weil RECIPE_POOL erst hier oben fertig ist. */
+(function pruneUnknownRecipeRefs(){
+  const known = new Set(allRecipes().map(r => r.id));
+  state.favorites = new Set([...state.favorites].filter(id => known.has(id)));
+  Object.keys(state.cookCounts).forEach(id => { if(!known.has(id)) delete state.cookCounts[id]; });
+})();
 
 /* ---------------- Nav ---------------- */
 const NAV_ITEMS = [
@@ -881,28 +1172,235 @@ function switchView(view){
 }
 
 /* ---------------- Toast ---------------- */
-function toast(msg){
+/* Meldung unten am Bildschirm. Optional mit einem "Rückgängig"-Knopf: Wer aus Versehen
+   ein Rezept weggewischt hat, soll es sofort zurückholen können, ohne erst in den
+   Einstellungen suchen zu müssen. Der Knopf steht dann etwas länger. */
+let undoAction = null;
+function toast(msg, undo){
   const t = document.getElementById('toast');
-  t.textContent = msg;
+  undoAction = undo || null;
+  t.innerHTML = undo
+    ? `<span>${msg}</span><button onclick="runUndo()" style="margin-left:14px;border:none;background:rgba(255,255,255,.22);color:inherit;font:inherit;font-weight:700;padding:5px 12px;border-radius:14px;cursor:pointer;">Rückgängig</button>`
+    : `<span>${msg}</span>`;
   t.classList.add('show');
   clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+  window._toastTimer = setTimeout(()=>{ t.classList.remove('show'); undoAction = null; }, undo ? 5000 : 2200);
+}
+
+function runUndo(){
+  const fn = undoAction;
+  undoAction = null;
+  document.getElementById('toast').classList.remove('show');
+  if(fn) fn();
+}
+
+/* ---------------- Nährwerte ----------------
+   Durchschnittswerte je 100 g essbarer Anteil, wie sie in gängigen Nährwerttabellen
+   stehen. Reihenfolge in "v":
+     [0] Kalorien (kcal)  [1] Protein (g)  [2] Kohlenhydrate (g)  [3] Fett (g)
+     [4] Ballaststoffe (g)  [5] Vitamin C (mg)  [6] Eisen (mg)  [7] Calcium (mg)
+     [8] Zucker (g)  [9] Omega-3-Fettsäuren (g)
+
+   Zucker meint den GESAMTEN Zucker, also auch den natürlich enthaltenen im Obst -
+   nicht nur zugesetzten. Deshalb steht bei Bananen und Trauben viel, obwohl da kein
+   Zucker zugesetzt wurde.
+
+   Omega-3 ist die Summe der Omega-3-Fettsäuren (pflanzliche ALA sowie EPA und DHA aus
+   Fisch). Bei Ölen schwankt das je nach Sorte extrem, deshalb sind Raps- und
+   Sonnenblumenöl getrennt aufgeführt: Rapsöl liegt bei rund 9 g, Sonnenblumenöl bei
+   0,2 g. Nur "Öl" ohne nähere Angabe bekommt einen vorsichtigen Mittelwert.
+
+   Wichtig und bewusst so gebaut:
+   - Das sind Durchschnittswerte, keine Messwerte für genau dein Produkt. Auf der
+     Packung kann etwas anderes stehen, und das ist dann richtiger.
+   - Trockene Ware (Reis, Nudeln, Linsen) ist ROH angegeben, so wie sie im Schrank
+     steht. Gekocht sind die Werte etwa ein Drittel davon, weil Wasser dazukommt.
+   - Was hier nicht drinsteht, bekommt KEINE geschätzten Werte. Lieber "keine Daten"
+     anzeigen als eine Zahl erfinden - dieselbe Regel wie bei der Haltbarkeit. */
+const NUTRITION = [
+  { k:['tomatenmark'], n:'Tomatenmark', v:[82,4.3,19,0.5,4.1,22,2.9,36,12.2,0.05] },
+  { k:['tomaten dose','dosentomaten','passierte tomaten','stückige tomaten'], n:'Tomaten (Dose)', v:[32,1.6,5,0.3,1.4,10,0.9,32,3.3,0.02] },
+  { k:['tomate','tomaten'], n:'Tomaten', v:[18,0.9,3.9,0.2,1.2,14,0.3,10,2.6,0] },
+  { k:['gurke'], n:'Gurke', v:[12,0.6,2.2,0.1,0.5,3,0.3,16,1.7,0.01] },
+  { k:['paprika'], n:'Paprika (rot)', v:[37,1.3,6.4,0.5,3,140,0.6,10,4.2,0.02] },
+  { k:['karotte','möhre','möhren','karotten'], n:'Karotten', v:[41,0.9,9.6,0.2,2.8,6,0.3,33,4.7,0] },
+  { k:['zwiebel'], n:'Zwiebeln', v:[40,1.1,9.3,0.1,1.7,7,0.2,23,4.2,0] },
+  { k:['knoblauch'], n:'Knoblauch', v:[149,6.4,33,0.5,2.1,31,1.7,181,1,0.02] },
+  { k:['kartoffel'], n:'Kartoffeln', v:[77,2,17,0.1,2.2,20,0.8,12,0.8,0.01] },
+  { k:['brokkoli'], n:'Brokkoli', v:[34,2.8,7,0.4,2.6,89,0.7,47,1.7,0.02] },
+  { k:['spinat'], n:'Spinat', v:[23,2.9,3.6,0.4,2.2,28,2.7,99,0.4,0.14] },
+  { k:['zucchini'], n:'Zucchini', v:[17,1.2,3.1,0.3,1,18,0.4,16,2.5,0.06] },
+  { k:['champignon','pilz','pilze'], n:'Champignons', v:[22,3.1,3.3,0.3,1,2,0.5,3,2,0] },
+  { k:['lauch','porree'], n:'Lauch', v:[61,1.5,14,0.3,1.8,12,2.1,59,3.9,0.02] },
+  { k:['kürbis'], n:'Kürbis', v:[26,1,6.5,0.1,0.5,9,0.8,21,2.8,0.01] },
+  { k:['salat','kopfsalat','eisbergsalat'], n:'Salat', v:[15,1.4,2.9,0.2,1.3,9,0.9,36,1.2,0.06] },
+  { k:['rucola'], n:'Rucola', v:[25,2.6,3.7,0.7,1.6,15,1.5,160,2.1,0.17] },
+  { k:['kohl','weißkohl','rotkohl'], n:'Kohl', v:[25,1.3,5.8,0.1,2.5,37,0.5,40,3.2,0.06] },
+  { k:['sellerie'], n:'Sellerie', v:[16,0.7,3,0.2,1.6,3,0.2,40,1.8,0.01] },
+  { k:['aubergine'], n:'Aubergine', v:[25,1,5.9,0.2,3,2,0.2,9,3.5,0.01] },
+  { k:['erbsen'], n:'Erbsen', v:[81,5.4,14,0.4,5.1,40,1.5,25,5.7,0.04] },
+  { k:['mais'], n:'Mais', v:[86,3.3,19,1.2,2,7,0.5,2,3.2,0.02] },
+  { k:['ingwer'], n:'Ingwer', v:[80,1.8,18,0.8,2,5,0.6,16,1.7,0.02] },
+  { k:['apfel','äpfel'], n:'Apfel', v:[52,0.3,14,0.2,2.4,5,0.1,6,10.4,0.01] },
+  { k:['banane'], n:'Bananen', v:[89,1.1,23,0.3,2.6,9,0.3,5,12.2,0.03] },
+  { k:['orange','orangen'], n:'Orangen', v:[47,0.9,12,0.1,2.4,53,0.1,40,9.4,0.01] },
+  { k:['zitrone'], n:'Zitrone', v:[29,1.1,9,0.3,2.8,53,0.6,26,2.5,0.03] },
+  { k:['erdbeer'], n:'Erdbeeren', v:[32,0.7,7.7,0.3,2,59,0.4,16,4.9,0.07] },
+  { k:['himbeer'], n:'Himbeeren', v:[52,1.2,12,0.7,6.5,26,0.7,25,4.4,0.13] },
+  { k:['heidelbeer','blaubeer'], n:'Heidelbeeren', v:[57,0.7,14,0.3,2.4,10,0.3,6,10,0.06] },
+  { k:['birne'], n:'Birne', v:[57,0.4,15,0.1,3.1,4,0.2,9,9.8,0] },
+  { k:['traube','trauben'], n:'Trauben', v:[69,0.7,18,0.2,0.9,4,0.4,10,16.3,0.02] },
+  { k:['avocado'], n:'Avocado', v:[160,2,9,15,6.7,10,0.6,12,0.7,0.11] },
+  { k:['kiwi'], n:'Kiwi', v:[61,1.1,15,0.5,3,93,0.3,34,9,0.04] },
+  { k:['mango'], n:'Mango', v:[60,0.8,15,0.4,1.6,36,0.2,11,13.7,0.05] },
+  { k:['ananas'], n:'Ananas', v:[50,0.5,13,0.1,1.4,48,0.3,13,9.9,0.02] },
+  { k:['melone'], n:'Melone', v:[34,0.8,8,0.2,0.9,37,0.2,9,7.9,0.03] },
+  { k:['pfirsich'], n:'Pfirsich', v:[39,0.9,10,0.3,1.5,7,0.3,6,8.4,0] },
+  { k:['buttermilch'], n:'Buttermilch', v:[37,3.5,4,0.5,0,1,0.1,110,4,0.01] },
+  { k:['kokosmilch'], n:'Kokosmilch', v:[197,2,2.8,21,2.2,3,3.3,16,2.8,0] },
+  { k:['hafermilch','haferdrink'], n:'Hafermilch', v:[45,0.8,6.6,1.5,0.8,0,0.2,120,3.3,0.01] },
+  { k:['mandelmilch'], n:'Mandelmilch', v:[24,0.5,3,1.1,0.4,0,0.2,120,2.5,0] },
+  { k:['sojamilch','sojadrink'], n:'Sojamilch', v:[42,3.3,2.5,1.9,0.5,0,0.4,120,1,0.1] },
+  { k:['milch'], n:'Milch (3,5 %)', v:[64,3.3,4.8,3.6,0,1,0.1,120,4.8,0.08] },
+  { k:['naturjoghurt','joghurt'], n:'Joghurt natur', v:[61,3.5,4.7,3.3,0,1,0.1,121,4.7,0.04] },
+  { k:['skyr'], n:'Skyr', v:[63,11,4,0.2,0,0,0.1,150,4,0.01] },
+  { k:['magerquark','quark'], n:'Quark', v:[67,12,4,0.3,0,1,0.1,92,4,0.01] },
+  { k:['frischkäse'], n:'Frischkäse', v:[253,6,4,24,0,0,0.1,98,3.2,0.2] },
+  { k:['mozzarella'], n:'Mozzarella', v:[254,18,2.2,19,0,0,0.4,505,1,0.2] },
+  { k:['parmesan'], n:'Parmesan', v:[392,36,3.2,26,0,0,0.8,1180,0.8,0.3] },
+  { k:['feta'], n:'Feta', v:[264,14,4.1,21,0,0,0.7,493,4.1,0.2] },
+  { k:['käse','gouda'], n:'Käse (Gouda)', v:[356,25,2.2,27,0,0,0.3,700,2.2,0.3] },
+  { k:['schlagsahne','sahne'], n:'Sahne', v:[292,2.1,3.4,30,0,1,0.1,80,2.9,0.2] },
+  { k:['erdnussbutter'], n:'Erdnussbutter', v:[588,25,20,50,6,0,1.9,49,9.2,0.05] },
+  { k:['margarine'], n:'Margarine', v:[720,0.2,0.4,80,0,0,0,10,0.4,0.5] },
+  { k:['butter'], n:'Butter', v:[741,0.7,0.6,82,0,0,0,15,0.6,0.3] },
+  { k:['ei','eier','hühnerei'], n:'Eier', v:[137,12.6,0.7,9.3,0,0,1.8,56,0.7,0.1] },
+  { k:['hähnchen','huhn','hühnerbrust'], n:'Hähnchenbrust', v:[165,31,0,3.6,0,0,0.7,15,0,0.03] },
+  { k:['hackfleisch','hack'], n:'Hackfleisch', v:[241,19,0,18,0,0,2.2,15,0,0.05] },
+  { k:['rindfleisch','rind'], n:'Rindfleisch', v:[250,26,0,15,0,0,2.6,18,0,0.04] },
+  { k:['schweinefleisch','schwein'], n:'Schweinefleisch', v:[242,27,0,14,0,1,0.9,19,0,0.03] },
+  { k:['pute','truthahn'], n:'Putenfleisch', v:[157,29,0,3.6,0,0,1.4,12,0,0.03] },
+  { k:['lachs'], n:'Lachs', v:[208,20,0,13,0,4,0.3,12,0,2] },
+  { k:['thunfisch'], n:'Thunfisch', v:[132,28,0,1.3,0,0,1.3,10,0,0.3] },
+  { k:['fisch'], n:'Fisch (mager)', v:[96,20,0,1.5,0,1,0.4,25,0,0.3] },
+  { k:['salami'], n:'Salami', v:[336,22,1.5,27,0,0,1.3,12,1.5,0.4] },
+  { k:['schinken'], n:'Schinken', v:[145,21,1,6,0,0,0.9,8,1,0.05] },
+  { k:['wurst'], n:'Wurst', v:[300,14,1,27,0,0,1.2,12,1,0.2] },
+  { k:['tofu'], n:'Tofu', v:[76,8.1,1.9,4.8,0.3,0,5.4,350,0.6,0.2] },
+  { k:['haferflocken'], n:'Haferflocken', v:[372,13,59,7,10,0,4.6,54,1,0.1] },
+  { k:['müsli'], n:'Müsli', v:[380,10,60,10,8,2,3.5,80,20,0.15] },
+  { k:['vollkornnudeln'], n:'Vollkornnudeln (roh)', v:[348,14,67,2.5,8,0,3.6,40,2.7,0.06] },
+  { k:['nudel','nudeln','pasta','spaghetti'], n:'Nudeln (roh)', v:[371,13,75,1.5,3.2,0,1.3,21,2.7,0.04] },
+  { k:['vollkornbrot'], n:'Vollkornbrot', v:[232,8.4,41,2.5,7.4,0,2.5,60,3,0.06] },
+  { k:['brot','brötchen'], n:'Brot', v:[250,8,47,1.2,4.5,0,1.8,45,3.5,0.04] },
+  { k:['reis'], n:'Reis (roh)', v:[360,7,78,0.9,1.3,0,0.8,10,0.1,0.02] },
+  { k:['couscous'], n:'Couscous (roh)', v:[376,13,77,0.6,5,0,1.1,24,0.6,0.03] },
+  { k:['quinoa'], n:'Quinoa (roh)', v:[368,14,64,6.1,7,0,4.6,47,4.6,0.31] },
+  { k:['mehl'], n:'Mehl', v:[348,10,72,1,3.2,0,1.1,15,0.3,0.02] },
+  { k:['kichererbsen dose'], n:'Kichererbsen (Dose)', v:[119,7,16,2.6,6.4,1,1.6,45,0.4,0.04] },
+  { k:['kichererbsen'], n:'Kichererbsen (roh)', v:[364,19,61,6,17,4,6.2,105,10.7,0.1] },
+  { k:['rote linsen','linsen'], n:'Linsen (roh)', v:[353,25,60,1.1,31,4,7.5,56,2,0.11] },
+  { k:['bohnen'], n:'Bohnen (roh)', v:[333,23,60,0.8,15,0,5.5,240,2.1,0.2] },
+  { k:['hummus'], n:'Hummus', v:[166,7.9,14,9.6,6,0,2.4,38,0.3,0.08] },
+  { k:['mandel','mandeln'], n:'Mandeln', v:[579,21,22,50,12.5,0,3.7,269,4.4,0.01] },
+  { k:['walnuss','walnüsse'], n:'Walnüsse', v:[654,15,14,65,6.7,1,2.9,98,2.6,9.1] },
+  { k:['erdnuss','erdnüsse'], n:'Erdnüsse', v:[567,26,16,49,8.5,0,4.6,92,4.7,0] },
+  { k:['nuss','nüsse'], n:'Nüsse', v:[600,17,17,57,8,1,3,120,4,1.5] },
+  { k:['olivenöl'], n:'Olivenöl', v:[884,0,0,100,0,0,0.6,1,0,0.76] },
+  { k:['rapsöl'], n:'Rapsöl', v:[884,0,0,100,0,0,0,0,0,9.1] },
+  { k:['sonnenblumenöl'], n:'Sonnenblumenöl', v:[884,0,0,100,0,0,0,0,0,0.2] },
+  { k:['öl'], n:'Speiseöl', v:[884,0,0,100,0,0,0,0,0,1] },
+  { k:['zartbitterschokolade','dunkle schokolade'], n:'Zartbitterschokolade', v:[546,4.9,61,31,7,0,8,56,24,0.03] },
+  { k:['schokolade'], n:'Schokolade', v:[535,7.6,59,30,3.4,0,2.4,189,52,0.03] },
+  { k:['honig'], n:'Honig', v:[304,0.3,82,0,0.2,1,0.4,6,82,0] },
+  { k:['marmelade','konfitüre'], n:'Marmelade', v:[250,0.4,62,0.1,1,3,0.3,15,60,0] },
+  { k:['zucker'], n:'Zucker', v:[387,0,100,0,0,0,0,1,100,0] },
+  { k:['ketchup'], n:'Ketchup', v:[112,1.7,26,0.1,0.3,4,0.4,18,22,0.01] },
+  { k:['orangensaft','saft'], n:'Saft', v:[45,0.7,10,0.2,0.2,50,0.2,11,8.3,0.01] },
+  { k:['keks','kekse'], n:'Kekse', v:[460,6,68,18,2.5,0,1.5,60,25,0.05] },
+  { k:['chips'], n:'Chips', v:[536,6.6,53,34,4.4,15,1.6,24,0.3,0.06] },
+  { k:['gemüsebrühe','brühe'], n:'Gemüsebrühe (fertig)', v:[4,0.2,0.5,0.1,0,0,0,3,0.3,0] },
+  { k:['cola','limo','limonade'], n:'Limonade', v:[42,0,10.6,0,0,0,0,3,10.6,0] },
+  { k:['wasser','mineralwasser'], n:'Wasser', v:[0,0,0,0,0,0,0,15,0,0] },
+];
+
+/* Welche Nährstoffe man auswählen kann. "idx" zeigt in das v-Feld oben. */
+const NUTRIENTS = [
+  { key:'protein', label:'Protein',       unit:'g',    idx:1, digits:1 },
+  { key:'carbs',   label:'Kohlenhydrate', unit:'g',    idx:2, digits:1 },
+  { key:'sugar',   label:'Zucker',        unit:'g',    idx:8, digits:1 },
+  { key:'fat',     label:'Fett',          unit:'g',    idx:3, digits:1 },
+  { key:'omega3',  label:'Omega-3',       unit:'g',    idx:9, digits:2 },
+  { key:'fiber',   label:'Ballaststoffe', unit:'g',    idx:4, digits:1 },
+  { key:'kcal',    label:'Kalorien',      unit:'kcal', idx:0, digits:0 },
+  { key:'vitc',    label:'Vitamin C',     unit:'mg',   idx:5, digits:0 },
+  { key:'iron',    label:'Eisen',         unit:'mg',   idx:6, digits:1 },
+  { key:'calcium', label:'Calcium',       unit:'mg',   idx:7, digits:0 },
+];
+
+/* Sucht den passenden Tabelleneintrag zu einem Artikelnamen.
+   Das LÄNGSTE passende Stichwort gewinnt - sonst würde "Kokosmilch" über "milch"
+   als Kuhmilch durchgehen und "Vollkornnudeln" als normale Nudeln.
+   Gesucht wird am Rohnamen (nur kleingeschrieben, Sonderzeichen zu Leerzeichen),
+   damit Klammerzusätze wie "(Dose)" erhalten bleiben. */
+function nutritionFor(name){
+  const raw = String(name || '').toLowerCase().replace(/[^a-zäöüß]+/g, ' ').trim();
+  if(!raw) return null;
+  const words = raw.split(' ');
+  let best = null, bestLen = 0;
+  for(const entry of NUTRITION){
+    for(const kw of entry.k){
+      const hit = kw.includes(' ')
+        ? raw.includes(kw)                                    // mehrteilige Stichwörter
+        : (kw.length > 3
+            ? words.some(w => w.includes(kw))                 // "nudeln" in "vollkornnudeln"
+            : words.some(w => w === kw));                     // kurze nur exakt ("ei")
+      if(hit && kw.length > bestLen){ best = entry; bestLen = kw.length; }
+    }
+  }
+  return best;
+}
+
+// Wert eines Nährstoffs für einen Artikel - oder null, wenn nichts bekannt ist.
+function nutrientValue(name, nutrientKey){
+  const entry = nutritionFor(name);
+  if(!entry) return null;
+  const n = NUTRIENTS.find(x => x.key === nutrientKey);
+  return n ? entry.v[n.idx] : null;
 }
 
 /* ---------------- Dashboard ---------------- */
 function daysUntil(d){
-  const diff = Math.ceil((d - new Date())/(1000*60*60*24));
-  return diff;
+  if(!d) return null;   // "lange haltbar" - kein Datum, also auch keine Restzeit
+  return Math.ceil((d - new Date())/(1000*60*60*24));
 }
-function expiryBadge(d){
-  const days = daysUntil(d);
-  if(days<=2) return `<span class="badge danger">noch ${days}T</span>`;
-  if(days<=6) return `<span class="badge warning">noch ${days}T</span>`;
-  // Früher stand hier nochmal das Datum - das steht aber schon in der Zeile davor
-  // ("haltbar bis 04.09.") und wirkte doppelt. Jetzt immer die Restzeit, bei langer
-  // Haltbarkeit gerundet in Monaten statt einer unhandlichen Tageszahl.
-  if(days<=60) return `<span class="badge success">noch ${days}T</span>`;
-  return `<span class="badge success">noch ${Math.round(days/30)} Mon.</span>`;
+
+// Nur Artikel mit Datum können ablaufen. Verpacktes ohne eingetragenes Datum taucht
+// deshalb nirgends in Ablauf-Warnungen oder Nachkauf-Vorschlägen auf.
+function hasDate(item){ return Boolean(item && item.expiry); }
+
+/* Übersetzt einen Artikel in das, was die App über ihn WEISS - und nicht mehr:
+   - "exact": ein selbst eingetragenes Datum von der Packung -> konkrete Restzeit
+   - "fresh": frische Ware ohne Datum -> nur Ampelfarbe und ein grobes Wort
+   - "stable": verpackte Ware ohne Datum -> gar keine Aussage */
+function freshnessState(item){
+  if(!hasDate(item)){
+    return { kind:'stable', color:'var(--text-muted)', tone:'', label:'lange haltbar' };
+  }
+  const days = daysUntil(item.expiry);
+  const color = days<=2 ? 'var(--danger)' : days<=6 ? 'var(--warning)' : 'var(--success)';
+  const tone  = days<=2 ? 'danger'        : days<=6 ? 'warning'        : 'success';
+  if(item.exact){
+    return { kind:'exact', color, tone, label: days<0 ? 'abgelaufen' : days===0 ? 'heute' : `noch ${days} T` };
+  }
+  // Bewusst ohne Zahl: Die Schätzung ist auf ein paar Tage genau, nicht auf einen Tag.
+  const label = days<=2 ? 'bald verbrauchen' : days<=6 ? 'diese Woche' : 'frisch';
+  return { kind:'fresh', color, tone, label };
+}
+
+function expiryBadge(item){
+  const f = freshnessState(item);
+  return `<span class="badge ${f.tone || 'neutral'}">${f.label}</span>`;
 }
 
 function renderDashboard(){
@@ -915,7 +1413,11 @@ function renderDashboard(){
     : 'Hier ist dein Überblick für heute.';
 
   document.getElementById('statCount').textContent = state.inventory.length;
-  const expiring = state.inventory.filter(i=>daysUntil(i.expiry)<=4).sort((a,b)=>a.expiry-b.expiry);
+  // Nur Artikel, bei denen die App wirklich etwas über die Haltbarkeit weiß:
+  // frische Ware (grobe, aber sinnvolle Schätzung) und selbst eingetragene Daten.
+  // Verpacktes ohne Datum bleibt außen vor - sonst warnt die App vor Erfundenem.
+  const expiring = state.inventory.filter(i=>hasDate(i) && daysUntil(i.expiry)<=4)
+                                  .sort((a,b)=>a.expiry-b.expiry);
   document.getElementById('statExpiring').textContent = expiring.length;
   document.getElementById('statFav').textContent = state.favorites.size;
 
@@ -945,16 +1447,163 @@ function renderDashboard(){
   expCard.innerHTML = expiring.length ? expiring.map(i=>`
     <div class="expiry-item">
       <div class="info" style="flex:1"><strong>${i.name}</strong><div style="font-size:12px;color:var(--text-muted)">${i.category}</div></div>
-      ${expiryBadge(i.expiry)}
+      ${expiryBadge(i)}
     </div>`).join('') : `<div class="empty">Aktuell läuft nichts Kritisches ab 🎉</div>`;
 
-  const favCard = document.getElementById('favCard');
-  const favs = allRecipes().filter(r=>state.favorites.has(r.id));
-  favCard.innerHTML = favs.length ? favs.map(r=>`
-    <div class="expiry-item" style="cursor:pointer" onclick="openRecipe('${r.id}')">
-      <div class="info" style="flex:1"><strong>${r.name}</strong><div style="font-size:12px;color:var(--text-muted)">${r.tags.join(' · ')}</div></div>
-      <span class="badge primary">${state.cookCounts[r.id]||0}× gekocht</span>
-    </div>`).join('') : `<div class="empty">Noch keine Lieblingsgerichte gelernt.<br>Koch ein paar Rezepte nach, dann merkt sich Easy Kitchen deine Favoriten automatisch.</div>`;
+  renderTracker();
+}
+
+/* ---------------- Gesundheitstracker ----------------
+   Zeigt, was in dem steckt, was gerade zuhause ist - sortiert nach einem Nährstoff,
+   den man oben auswählt.
+
+   Eine Einschränkung, die überall sichtbar bleiben muss: Die App kennt nur NAMEN,
+   keine Mengen. Sie weiß also nicht, ob eine Banane oder fünf Kilo Bananen da sind,
+   und erst recht nicht, was davon gegessen wurde. Deshalb vergleicht der Tracker
+   ausschließlich je 100 g und behauptet nirgends, wie viel du zu dir genommen hast.
+   Alles andere wäre eine erfundene Zahl.
+
+   Bewusst NICHT "gut" und "schlecht", sondern "am meisten" und "am wenigsten":
+   Ein Lebensmittel ist nicht schlecht, weil es wenig Protein hat - Olivenöl hat gar
+   keins und ist trotzdem sinnvoll. Die App ordnet ein, sie bewertet nicht. */
+function trackerNutrient(){
+  const found = NUTRIENTS.find(n => n.key === state.trackerNutrient);
+  if(found) return found;
+  // Alter Speicherstand mit einem Nährstoff, den es nicht mehr gibt (z.B. "Kalium"):
+  // still auf den ersten zurücksetzen, damit auch der passende Chip markiert ist.
+  state.trackerNutrient = NUTRIENTS[0].key;
+  return NUTRIENTS[0];
+}
+
+function setTrackerNutrient(key){
+  state.trackerNutrient = key;
+  saveState();
+  renderDashboard();
+}
+
+// Alle Bestandsartikel mit bekannten Nährwerten, absteigend nach dem gewählten Wert.
+function trackerRanking(){
+  const n = trackerNutrient();
+  const rows = [];
+  const unknown = [];
+  state.inventory.forEach(item => {
+    const entry = nutritionFor(item.name);
+    if(!entry){ unknown.push(item.name); return; }
+    rows.push({ id:item.id, name:item.name, ref:entry.n, value:entry.v[n.idx], entry });
+  });
+  rows.sort((a,b) => b.value - a.value);
+  return { rows, unknown, nutrient:n };
+}
+
+function fmtNutrient(value, n){
+  return `${value.toFixed(n.digits)} ${n.unit}`.replace('.', ',');
+}
+
+function renderTracker(){
+  // Zuerst aufrufen, damit eine ungültige gespeicherte Auswahl geradegezogen ist,
+  // BEVOR die Chips gezeichnet werden - sonst wäre keiner davon markiert.
+  const active = trackerNutrient();
+
+  const chips = document.getElementById('trackerChips');
+  if(chips){
+    chips.innerHTML = NUTRIENTS.map(n => `
+      <button class="chip ${active.key === n.key ? 'active' : ''}"
+              onclick="setTrackerNutrient('${n.key}')">${n.label}</button>`).join('');
+  }
+
+  const card = document.getElementById('trackerCard');
+  if(!card) return;
+  const { rows, unknown, nutrient } = trackerRanking();
+
+  if(!rows.length){
+    card.innerHTML = `<div class="empty">${state.inventory.length
+      ? 'Zu den Artikeln in deinem Bestand liegen mir keine Nährwerte vor.'
+      : 'Sobald etwas in deinem Bestand liegt, siehst du hier die Nährwerte.'}</div>`;
+    return;
+  }
+
+  const top = rows.slice(0, 5);
+  const max = rows[0].value;
+  const least = rows[rows.length - 1];
+
+  card.innerHTML = `
+    ${top.map(r => nutrientRow(r, max, nutrient)).join('')}
+    ${rows.length > 1 ? `
+      <div class="nut-least">
+        Am wenigsten ${nutrient.label}: <strong>${escapeHtml(least.name)}</strong>
+        (${fmtNutrient(least.value, nutrient)})
+      </div>` : ''}
+    ${rows.length > 5 ? `
+      <button class="btn btn-outline" style="margin-top:10px;" onclick="openTrackerSheet()">
+        Alle ${rows.length} Artikel ansehen
+      </button>` : ''}
+    <p class="subtle" style="font-size:11px;margin:10px 0 0;">
+      Durchschnittswerte je 100&nbsp;g – auf deiner Packung kann etwas anderes stehen.
+      ${unknown.length ? `<br>Für ${unknown.length} Artikel liegen mir keine Werte vor: ${escapeHtml(unknown.slice(0,4).join(', '))}${unknown.length > 4 ? ' …' : ''}` : ''}
+    </p>`;
+}
+
+function nutrientRow(r, max, nutrient){
+  // Ein Nullwert bekommt auch einen leeren Balken - ein Mindestbalken würde vortäuschen,
+  // dass etwas davon enthalten ist.
+  const pct = (max > 0 && r.value > 0) ? Math.max(2, Math.round(r.value / max * 100)) : 0;
+  return `
+    <div class="nut-item" onclick="openNutritionDetail(${r.id})">
+      <div class="nut-head">
+        <strong>${escapeHtml(r.name)}</strong>
+        <span class="nut-val">${fmtNutrient(r.value, nutrient)}</span>
+      </div>
+      <div class="nut-bar"><i style="width:${pct}%"></i></div>
+    </div>`;
+}
+
+function openTrackerSheet(){
+  const { rows, unknown, nutrient } = trackerRanking();
+  const max = rows.length ? rows[0].value : 0;
+  document.getElementById('trackerSheetContent').innerHTML = `
+    <h2>${nutrient.label} im Bestand</h2>
+    <p class="subtle" style="margin-bottom:14px;">
+      Alle ${rows.length} Artikel, für die Nährwerte vorliegen – je 100&nbsp;g, absteigend sortiert.
+      Tipp auf einen Artikel für alle Werte.
+    </p>
+    <div class="card">${rows.map(r => nutrientRow(r, max, nutrient)).join('')}</div>
+    ${unknown.length ? `
+      <div class="section-title">Ohne Nährwerte</div>
+      <div class="card">
+        <p class="subtle" style="font-size:12px;margin:0;">
+          ${escapeHtml(unknown.join(', '))}<br><br>
+          Diese Artikel stehen nicht in der Nährwerttabelle. Easy Kitchen schätzt hier
+          bewusst nichts – erfundene Zahlen wären schlimmer als gar keine.
+        </p>
+      </div>` : ''}
+    <button class="btn btn-outline" style="margin-top:14px;" onclick="closeSheet('trackerOverlay')">Schließen</button>`;
+  document.getElementById('trackerOverlay').classList.add('open');
+}
+
+function openNutritionDetail(itemId){
+  const item = state.inventory.find(i => i.id === itemId);
+  if(!item) return;
+  const entry = nutritionFor(item.name);
+  if(!entry) return;
+  document.getElementById('nutritionSheetContent').innerHTML = `
+    <h2>${escapeHtml(item.name)}</h2>
+    <p class="subtle" style="margin-bottom:14px;">
+      Durchschnittswerte je 100&nbsp;g${entry.n.toLowerCase() !== item.name.toLowerCase()
+        ? ` – zugeordnet zu „${escapeHtml(entry.n)}“` : ''}.
+    </p>
+    <div class="card">
+      ${NUTRIENTS.map(n => `
+        <div class="expiry-item">
+          <div class="info" style="flex:1"><strong style="font-size:13.5px;">${n.label}</strong></div>
+          <span class="badge neutral">${fmtNutrient(entry.v[n.idx], n)}</span>
+        </div>`).join('')}
+    </div>
+    <p class="subtle" style="font-size:11px;margin-top:10px;">
+      Trockene Ware wie Reis, Nudeln oder Linsen ist roh angegeben, so wie sie im Schrank
+      steht. Gekocht sind die Werte etwa ein Drittel davon, weil Wasser dazukommt.
+    </p>
+    <button class="btn btn-outline" style="margin-top:12px;" onclick="closeSheet('nutritionOverlay')">Schließen</button>`;
+  document.getElementById('nutritionOverlay').classList.add('open');
 }
 
 /* ---------------- Inventory ---------------- */
@@ -983,17 +1632,20 @@ function renderInventory(){
   const newCache = {};
   list.innerHTML = cats.map(cat=>{
     const items = state.inventory.filter(i=>i.category===cat);
+    // Artikel ohne Datum ("lange haltbar") sortieren immer ans Ende - oben soll
+    // stehen, was wirklich bald verbraucht werden muss.
+    const rank = i => i.expiry ? i.expiry.getTime() : Infinity;
     const order = inventoryOrderCache && inventoryOrderCache[cat];
     if(order){
       items.sort((a,b)=>{
         const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
-        if(ia===-1 && ib===-1) return a.expiry-b.expiry;
+        if(ia===-1 && ib===-1) return rank(a)-rank(b);
         if(ia===-1) return 1;   // neue Artikel hinten anhängen
         if(ib===-1) return -1;
         return ia-ib;
       });
     } else {
-      items.sort((a,b)=>a.expiry-b.expiry);
+      items.sort((a,b)=>rank(a)-rank(b));
     }
     newCache[cat] = items.map(i=>i.id);
     if(!items.length) return '';
@@ -1001,22 +1653,32 @@ function renderInventory(){
       <div class="cat-block">
         <div class="cat-head"><h3>${cat}</h3><span class="pill">${items.length} Artikel</span></div>
         ${items.map(i=>{
-          const days = daysUntil(i.expiry);
-          const dotColor = days<=2 ? 'var(--danger)' : days<=6 ? 'var(--warning)' : 'var(--success)';
+          const f = freshnessState(i);
+          // Was unter dem Namen steht, hängt davon ab, was die App weiß:
+          //   exact  -> das echte Datum, antippbar zum Ändern
+          //   fresh  -> ehrlich als Schätzung gekennzeichnet
+          //   stable -> Einladung, das Datum von der Packung nachzutragen
+          const subLabel = f.kind === 'exact'  ? `haltbar bis ${fmtDate(i.expiry)}`
+                         : f.kind === 'fresh'  ? 'geschätzt · Datum eintragen'
+                         :                       'Datum eintragen';
           const expiryField = editingExpiryId === i.id
-            ? `<input type="date" value="${toISODate(i.expiry)}" data-expiry-input="${i.id}" onchange="saveExpiry(${i.id}, this.value)" onblur="cancelEditExpiry(${i.id})" autofocus style="font-size:12.5px;padding:2px 6px;border:1px solid var(--border);border-radius:6px;font-family:inherit;"/>`
-            : `<span onclick="editExpiry(${i.id})" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">haltbar bis ${fmtDate(i.expiry)}</span>`;
-          return `
+            ? `<input type="date" value="${toISODate(i.expiry || todayOffset(7))}" data-expiry-input="${i.id}" onchange="saveExpiry(${i.id}, this.value)" onblur="cancelEditExpiry(${i.id})" autofocus style="font-size:12.5px;padding:2px 6px;border:1px solid var(--border);border-radius:6px;font-family:inherit;"/>`
+            : `<span onclick="editExpiry(${i.id})" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${subLabel}</span>`;
+          return swipeWrap(`
           <div class="item-row">
-            <span class="item-dot" style="background:${dotColor}"></span>
+            <span class="item-dot" style="background:${f.color}"></span>
             <div class="info"><strong>${i.name}</strong>${expiryField}</div>
-            ${expiryBadge(i.expiry)}
+            ${expiryBadge(i)}
             <button onclick="removeItem(${i.id})" style="border:none;background:none;color:var(--text-muted);cursor:pointer;padding:10px;margin:-10px -6px -10px 0;font-size:15px;">✕</button>
-          </div>`;
+          </div>`, {
+            left:  { icon:'🛒', label:'Nachkaufen', code:`shopThisItem(${i.id})` },
+            right: { icon:'✕',  label:'Verbraucht', code:`removeItem(${i.id})` },
+          });
         }).join('')}
       </div>`;
   }).join('') || `<div class="empty">Noch nichts im Bestand.<br>Tipp oben auf „Foto hinzufügen“ – ein Foto vom Kühlschrank oder Kassenzettel reicht.</div>`;
   inventoryOrderCache = newCache;
+  enableAllSwipes();
 }
 
 function editExpiry(id){
@@ -1040,45 +1702,18 @@ function saveExpiry(id, value){
   const d = new Date(value + 'T00:00:00');
   if(isNaN(d.getTime())) return;
   item.expiry = d;
+  // Selbst eingetragen heißt: Das ist eine Tatsache von der Packung, keine Schätzung
+  // mehr. Ab jetzt darf die App damit auch konkret rechnen und warnen.
+  item.exact = true;
   editingExpiryId = null;
   renderAll();
-  toast(`Haltbarkeit von „${item.name}“ aktualisiert`);
+  toast(`Haltbarkeit von „${item.name}“ gespeichert`);
 }
 
 /* ---------------- Artikel von Hand eintragen ----------------
    Nicht alles kommt per Foto in den Bestand - manchmal will man einfach schnell
-   etwas eintippen. Die Haltbarkeit wird dabei anhand des Namens grob vorgeschlagen
-   (einfache Stichwort-Tabelle, kein KI-Aufruf: sofort da, funktioniert auch offline)
-   und lässt sich vor dem Speichern und später jederzeit ändern. */
-const SHELF_LIFE_HINTS = [
-  { days:3,   words:['salat','beere','erdbeer','himbeer','banane','pilz','champignon','spinat','rucola','kräuter','petersilie','basilikum'] },
-  { days:5,   words:['fisch','lachs','hack','geflügel','hähnchen','pute','fleisch','wurst','aufschnitt','brot','brötchen','sahne','frischkäse'] },
-  { days:8,   words:['milch','joghurt','quark','skyr','buttermilch','tofu','tomate','gurke','paprika','zucchini','brokkoli','avocado','trauben'] },
-  { days:14,  words:['käse','butter','margarine','apfel','birne','orange','zitrone','karotte','möhre','kohl','lauch','sellerie','hummus'] },
-  { days:21,  words:['ei','eier'] },
-  { days:60,  words:['kartoffel','zwiebel','knoblauch','kürbis','ingwer'] },
-  { days:180, words:['mehl','zucker','haferflocken','müsli','nudel','pasta','couscous','brühe','gewürz','backpulver','schokolade','keks','chips','nuss','mandel'] },
-  { days:365, words:['reis','linsen','bohnen','kichererbsen','quinoa','öl','essig','honig','marmelade','sirup','tee','kaffee','saft','wasser','cola','limo','pepsi'] },
-  { days:540, words:['dose','konserve','eingelegt','tiefkühl','tk','gefrier'] },
-];
-
-// Kurze Stichwörter (z.B. "ei") dürfen NICHT einfach als Teilstring gesucht werden -
-// sonst wird aus "Reis" ein Ei-Treffer (r-EI-s) und die Schätzung ist völlig daneben.
-// Deshalb: kurze Wörter nur als ganzes Wort oder als Wortende (deutsche Komposita wie
-// "Hühnerei" oder "Olivenöl"), längere Stichwörter ganz normal als Teilstring.
-function shelfWordMatches(normalizedName, word){
-  if(word.length > 3) return normalizedName.includes(word);
-  return normalizedName.split(/\s+/).some(part => part === word || part.endsWith(word));
-}
-
-function estimateShelfLife(name){
-  const n = normName(name);
-  if(!n) return 7;
-  for(const group of SHELF_LIFE_HINTS){
-    if(group.words.some(w => shelfWordMatches(n, w))) return group.days;
-  }
-  return 7;   // neutraler Standard, wenn nichts passt
-}
+   etwas eintippen. Das Datumsfeld bleibt dabei bewusst leer: Wer das aufgedruckte
+   Datum kennt, trägt es ein; sonst ordnet die App den Artikel nur grob ein. */
 
 function openManualAddSheet(){
   window._manualCategory = 'Kühlschrank';
@@ -1098,11 +1733,11 @@ function openManualAddSheet(){
       <button class="chip" id="manualCatVorrat" onclick="setManualCategory('Vorrat')">Vorrat</button>
     </div>
 
-    <div class="section-title" style="margin:16px 0 8px;">Haltbar bis</div>
-    <input id="manualDateInput" type="date" value="${toISODate(todayOffset(7))}"
-           onchange="this.dataset.touched='1'; document.getElementById('manualHint').textContent='Eigenes Datum gesetzt.';"
+    <div class="section-title" style="margin:16px 0 8px;">Haltbar bis <span style="font-weight:400;color:var(--text-muted);">(nur wenn du es weißt)</span></div>
+    <input id="manualDateInput" type="date" value=""
+           onchange="this.dataset.touched='1'; updateManualEstimate();"
            style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-family:inherit;font-size:15px;background:var(--surface);" />
-    <p class="subtle" id="manualHint" style="font-size:11.5px;margin:6px 0 0;">Wird automatisch geschätzt – du kannst das Datum einfach ändern.</p>
+    <p class="subtle" id="manualHint" style="font-size:11.5px;margin:6px 0 0;">Steht ein Datum auf der Packung? Dann trag es hier ein. Sonst einfach leer lassen.</p>
 
     <button class="btn btn-primary" style="margin-top:18px;" onclick="submitManualItem()">Zum Bestand hinzufügen</button>
     <button class="btn btn-outline" onclick="closeSheet('manualAddOverlay')">Abbrechen</button>
@@ -1120,14 +1755,27 @@ function setManualCategory(cat){
   updateManualEstimate();
 }
 
-// Schlägt beim Tippen ein passendes Haltbarkeitsdatum vor - aber nur, solange der
-// Nutzer das Datum nicht selbst angefasst hat.
+/* Das Datumsfeld wird NICHT mehr automatisch gefüllt. Stattdessen sagt die App beim
+   Tippen ehrlich, wie sie den Artikel einordnen wird - so weiß man vorher, ob sich das
+   Eintragen eines Datums überhaupt lohnt. */
 function updateManualEstimate(){
   const nameEl = document.getElementById('manualNameInput');
   const dateEl = document.getElementById('manualDateInput');
-  if(!nameEl || !dateEl || dateEl.dataset.touched === '1') return;
-  const days = estimateShelfLife(nameEl.value);
-  dateEl.value = toISODate(todayOffset(days));
+  const hintEl = document.getElementById('manualHint');
+  if(!nameEl || !dateEl || !hintEl) return;
+
+  if(dateEl.dataset.touched === '1' && dateEl.value){
+    hintEl.textContent = 'Eigenes Datum gesetzt – danach richtet sich Easy Kitchen.';
+    return;
+  }
+  const name = nameEl.value.trim();
+  if(!name){
+    hintEl.textContent = 'Steht ein Datum auf der Packung? Dann trag es hier ein. Sonst einfach leer lassen.';
+    return;
+  }
+  hintEl.textContent = isFreshItem(name)
+    ? 'Wird als frische Ware behandelt – Easy Kitchen erinnert dich grob, wenn es Zeit wird.'
+    : 'Wird als „lange haltbar“ geführt. Ohne Datum warnt Easy Kitchen hier bewusst nicht.';
 }
 
 function submitManualItem(){
@@ -1136,13 +1784,16 @@ function submitManualItem(){
   const name = nameEl ? nameEl.value.trim().replace(/\s+/g,' ') : '';
   if(!name){ toast('Schreib kurz auf, was du hinzufügen willst'); return; }
 
-  let expiry = todayOffset(estimateShelfLife(name));
+  // Ohne eingetragenes Datum entscheidet initialExpiry(): frische Ware bekommt eine
+  // grobe Schätzung, verpackte gar kein Datum.
+  let expiry = initialExpiry(name);
+  let exact = false;
   if(dateEl && dateEl.value){
     const d = new Date(dateEl.value + 'T00:00:00');
-    if(!isNaN(d.getTime())) expiry = d;
+    if(!isNaN(d.getTime())){ expiry = d; exact = true; }
   }
 
-  const res = addToInventory(name, window._manualCategory || 'Kühlschrank', expiry);
+  const res = addToInventory(name, window._manualCategory || 'Kühlschrank', expiry, exact);
   closeSheet('manualAddOverlay');
   inventoryOrderCache = null;   // neuer Artikel soll gleich einsortiert werden
   switchView('bestand');
@@ -1405,7 +2056,9 @@ function confirmRecognition(category){
       const estDays = parseInt(row.dataset.estDays, 10) || 10;
       // Über addToInventory(), damit nichts doppelt im Bestand landet, wenn man
       // z.B. denselben Kassenzettel zweimal fotografiert.
-      const res = addToInventory(name, category, todayOffset(estDays));
+      // initialExpiry() entscheidet, ob überhaupt ein Datum gesetzt wird: Bei
+      // verpackter Ware steht das echte Datum auf der Packung, da rät die App nicht.
+      const res = addToInventory(name, category, initialExpiry(name, estDays));
       if(res && res.status === 'added') added++;
       else if(res) updated++;
     }
@@ -1426,19 +2079,69 @@ function confirmRecognition(category){
    Filter, die sich aus der Personalisierung tatsächlich ergeben; hat jemand nichts
    angegeben, gibt es gar keine Filterleiste. */
 const ALL_FILTERS = [
-  {key:'vegan', label:'Vegan'},
-  {key:'vegetarisch', label:'Vegetarisch'},
   {key:'fast', label:'< 25 Min'},
   {key:'proteinreich', label:'Proteinreich'},
 ];
 
+/* ---------------- Ernährungsform: harte Grenze, kein Filter-Knopf ----------------
+   Wer vegan oder vegetarisch angegeben hat, soll Fleisch- und Fischrezepte gar nicht
+   erst zu sehen bekommen. Vorher hat die Personalisierung nur die Reihenfolge
+   beeinflusst - ein Veganer bekam also trotzdem Lachs angezeigt, nur weiter unten.
+   Deshalb gibt es für "Vegan"/"Vegetarisch" jetzt auch keine Filter-Chips mehr:
+   Das ist keine Ansichtssache, die man an- und ausknipst, sondern eine Vorgabe.
+
+   Geprüft wird nicht über die Schlagwörter, sondern über die Zutaten. So rutscht auch
+   ein Rezept nicht durch, das die KI falsch verschlagwortet hat. */
+const MEAT_WORDS = [
+  'fleisch','hack','hackfleisch','hähnchen','huhn','pute','truthahn','rind','schwein',
+  'speck','schinken','wurst','salami','bacon','lamm','ente','gans','kalb','leber',
+  'lachs','fisch','thunfisch','sardelle','anchovis','garnele','shrimp','krabbe',
+  'muschel','tintenfisch','gelatine','schmalz',
+];
+const ANIMAL_WORDS = [
+  'ei','eier','milch','sahne','butter','joghurt','quark','skyr','käse','feta',
+  'mozzarella','parmesan','schmand','mascarpone','ricotta','ghee','honig','buttermilch',
+];
+// Pflanzliches, das ein tierisches Wort im Namen trägt. Ohne diese Ausnahmen würde
+// veganen Nutzern ihr eigenes Kokosmilch-Dal weggefiltert.
+const PLANT_EXCEPTIONS = [
+  'kokosmilch','hafermilch','mandelmilch','sojamilch','reismilch','pflanzenmilch',
+  'kokosjoghurt','sojajoghurt','erdnussbutter','kokosbutter','butternut','butternuss',
+  'honigmelone','kokosöl','sojasahne','hafersahne',
+];
+
+function recipeIngredientText(r){
+  return [...(r.needs||[]), ...(r.missing||[]), ...(r.ingredients||[])].join(' ').toLowerCase();
+}
+
+function recipeHasAny(recipe, words){
+  let text = recipeIngredientText(recipe);
+  PLANT_EXCEPTIONS.forEach(e => { text = text.split(e).join(' '); });
+  const parts = text.split(/[^a-zäöüß]+/).filter(Boolean);
+  return words.some(w => w.length > 3
+    ? parts.some(p => p.includes(w))    // "fleisch" steckt auch in "hackfleisch"
+    : parts.includes(w));               // kurze Wörter wie "ei" nur exakt
+}
+
+function dietMode(){
+  const diet = (state.personalization && state.personalization.dietType) || [];
+  if(diet.includes('Vegan')) return 'vegan';
+  if(diet.includes('Vegetarisch')) return 'vegetarisch';
+  return null;
+}
+
+function fitsDiet(recipe){
+  const mode = dietMode();
+  if(!mode) return true;
+  if(recipeHasAny(recipe, MEAT_WORDS)) return false;
+  if(mode === 'vegan' && recipeHasAny(recipe, ANIMAL_WORDS)) return false;
+  return true;
+}
+
 function availableFilters(){
   const p = state.personalization;
-  const diet = p.dietType || [];
   const focus = p.dietFocus || [];
   const keys = [];
-  if(diet.includes('Vegan')) keys.push('vegan');
-  if(diet.includes('Vegetarisch')) keys.push('vegetarisch');
   if(p.cookTime === '< 15 Minuten' || p.cookTime === '15–30 Minuten') keys.push('fast');
   if(focus.includes('Proteinreich')) keys.push('proteinreich');
   return ALL_FILTERS.filter(f=>keys.includes(f.key));
@@ -1507,13 +2210,29 @@ function inventoryHas(name){
 }
 
 // Merkt sich einen aufgebrauchten/entfernten Artikel als echten Nachkauf-Vorschlag.
+/* Nach rechts wischen im Bestand: "wird knapp, bitte nachkaufen". Der Artikel bleibt
+   im Bestand und landet auf der richtigen Einkaufsliste - NICHT bei den Nachkauf-
+   Vorschlägen. Die räumt cleanupRestock() nämlich sofort wieder weg, sobald der
+   Artikel im Bestand liegt, und genau das wäre hier ja der Fall. */
+function shopThisItem(id){
+  const item = state.inventory.find(i => i.id === id);
+  if(!item) return;
+  if(state.shopping.recipeItems.some(i => namesMatch(i.label, item.name))){
+    toast(`„${item.name}“ steht schon auf der Einkaufsliste`);
+    return;
+  }
+  state.shopping.recipeItems.push({
+    id:'sr'+(++idCounter), label:item.name, checked:false, fromRecipe:'geht zur Neige',
+  });
+  renderAll();
+  toast(`„${item.name}“ auf die Einkaufsliste gesetzt`);
+}
+
 function addRestockSuggestion(label){
   if(!label) return;
   if(state.shopping.restock.some(i => namesMatch(i.label, label))) return;
-  const item = {id:'rs'+(++idCounter), label, checked:false, created: Date.now()};
-  state.shopping.restock.unshift(item);
+  state.shopping.restock.unshift({id:'rs'+(++idCounter), label, checked:false, created: Date.now()});
   state.shopping.restock = state.shopping.restock.slice(0, 8);   // Liste kurz halten
-  syncNewShoppingItemToBackend(item);   // offline-tauglich, siehe Funktionskommentar unten
 }
 
 /* Räumt die Nachkauf-Vorschläge auf. Zwei Gründe, warum ein Vorschlag verschwindet:
@@ -1529,10 +2248,9 @@ function cleanupRestock(){
   const now = Date.now();
   const before = state.shopping.restock.length;
   state.shopping.restock = state.shopping.restock.filter(i => {
-    const wiederDa = inventoryHas(i.label);                          // wieder da
-    const zuAlt = Boolean(i.created && (now - i.created) > maxAge);  // zu alt
-    if((wiederDa || zuAlt) && i.dbId) syncCheckedShoppingItemToBackend(i.dbId);
-    return !wiederDa && !zuAlt;
+    if(inventoryHas(i.label)) return false;                       // wieder da
+    if(i.created && (now - i.created) > maxAge) return false;     // zu alt
+    return true;
   });
   return before !== state.shopping.restock.length;
 }
@@ -1543,24 +2261,42 @@ function cleanupRestock(){
    sondern nur das Haltbarkeitsdatum aufgefrischt - frisch Gekauftes hält ja länger.
    Verhindert genau das Doppeln, wenn man z.B. nach dem Einkauf nochmal den
    Kassenzettel fotografiert. */
-function addToInventory(name, category, expiry){
+function addToInventory(name, category, expiry, exact){
   const clean = String(name || '').trim().replace(/\s+/g,' ');
   if(!clean) return null;
   const existing = findInventoryItem(clean);
   if(existing){
-    if(expiry > existing.expiry) existing.expiry = expiry;   // späteres Datum gewinnt
+    if(exact){
+      // Ein selbst eingetragenes Datum ist eine Tatsache und gewinnt immer.
+      existing.expiry = expiry;
+      existing.exact = true;
+    } else if(!existing.exact && expiry && (!existing.expiry || expiry > existing.expiry)){
+      // Nur Schätzungen dürfen sich gegenseitig auffrischen - frisch Gekauftes hält
+      // länger. Eine Schätzung überschreibt aber nie ein echtes Datum.
+      existing.expiry = expiry;
+    }
     if(category) existing.category = category;
     return { status:'updated', item: existing };
   }
-  const item = { id: ++idCounter, name: clean, category: category || 'Kühlschrank', expiry };
+  const item = {
+    id: ++idCounter,
+    name: clean,
+    category: category || 'Kühlschrank',
+    expiry: expiry || null,     // null = lange haltbar, die App behauptet nichts
+    exact: Boolean(exact),
+  };
   state.inventory.push(item);
-  syncNewInventoryItemToBackend(item);   // offline-tauglich, siehe Funktionskommentar unten
+  // Falls ein Haushalt geteilt wird: den neuen Artikel im Hintergrund hochladen,
+  // ohne auf die Antwort zu warten - die App bleibt sofort bedienbar (Offline-First).
+  syncNewItemToBackend(item);
   return { status:'added', item };
 }
 
 // Grobe Einschätzung, wo ein neu gekaufter Artikel hingehört: kurz haltbar -> Kühlschrank.
+// Ohne Schätzung (verpackte oder unbekannte Ware) landet er im Vorrat.
 function guessCategory(name){
-  return estimateShelfLife(name) <= 14 ? 'Kühlschrank' : 'Vorrat';
+  const days = estimateShelfLife(name);
+  return days !== null && days <= 14 ? 'Kühlschrank' : 'Vorrat';
 }
 
 function matchCount(recipe){
@@ -1585,13 +2321,136 @@ function personalizationScore(recipe){
   return score;
 }
 
+/* ---------------- Wischgesten ----------------
+   Bewusst mit reinen Touch-Ereignissen gebaut und nicht mit Pointer Events: Beim
+   Sheet-Ziehen hatte iOS die Geste erst verzögert ausgewertet, weil es noch überlegte,
+   ob gescrollt werden soll - dadurch musste man lange drücken und es wurde Text
+   markiert. Mit touch-action:pan-y und dieser Auswertung ist die Richtung nach ein
+   paar Pixeln entschieden und die Geste greift sofort.
+
+   Regeln:
+   - Erst ab 10 px Bewegung wird entschieden, ob waagerecht oder senkrecht gemeint war.
+   - Senkrecht gewinnt: Dann lassen wir vollständig los, damit Scrollen normal bleibt.
+   - Ein Wisch löst erst ab SWIPE_TRIGGER aus, vorher federt die Zeile zurück.
+   - Nach einem Wisch wird das anschließende Klick-Ereignis unterdrückt, damit sich
+     nicht zusätzlich das Rezept öffnet. */
+/* Der Weg der Geste: Bis zur Auslöseschwelle folgt die Zeile dem Finger eins zu eins.
+   Danach darf man deutlich weiterziehen, aber mit wachsendem Widerstand - so wie sich
+   Listen auf dem iPhone anfühlen, wenn man über das Ende hinaus scrollt. Das gibt der
+   Geste Raum, ohne dass die Zeile beliebig weit vom Bildschirm rutscht. */
+const SWIPE_TRIGGER = 82;      // ab hier löst die Aktion aus
+const SWIPE_MAX = 190;         // weiter lässt sich die Zeile nicht ziehen
+const SWIPE_RESIST = 0.42;     // Bremswirkung jenseits der Auslöseschwelle
+
+// Wandelt die Fingerbewegung in den tatsächlichen Versatz der Zeile um.
+function swipeOffset(raw){
+  const dir = raw < 0 ? -1 : 1;
+  const dist = Math.abs(raw);
+  const eased = dist <= SWIPE_TRIGGER
+    ? dist
+    : SWIPE_TRIGGER + (dist - SWIPE_TRIGGER) * SWIPE_RESIST;
+  return dir * Math.min(eased, SWIPE_MAX);
+}
+
+function enableSwipe(wrap){
+  const fg = wrap.querySelector('.swipe-fg');
+  if(!fg || fg.dataset.swipeReady === '1') return;
+  fg.dataset.swipeReady = '1';
+
+  const onLeft = wrap.dataset.swipeLeft || '';
+  const onRight = wrap.dataset.swipeRight || '';
+  let startX = 0, startY = 0, dx = 0, raw = 0, axis = null, active = false;
+
+  const setX = x => { fg.style.transform = x ? `translateX(${x}px)` : ''; };
+  const release = () => { fg.classList.add('snap'); setX(0); setTimeout(()=>fg.classList.remove('snap'), 240); };
+
+  fg.addEventListener('touchstart', e => {
+    if(e.touches.length !== 1) return;
+    // Auf echten Bedienelementen (z.B. dem ✕ oder dem Herz) nicht wischen.
+    if(e.target.closest('button, input, a, .recipe-fav')) return;
+    startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+    dx = 0; raw = 0; axis = null; active = true;
+    fg.classList.remove('snap');
+    wrap.classList.remove('armed');
+  }, {passive:true});
+
+  fg.addEventListener('touchmove', e => {
+    if(!active) return;
+    const mx = e.touches[0].clientX - startX;
+    const my = e.touches[0].clientY - startY;
+    if(axis === null){
+      if(Math.abs(mx) < 10 && Math.abs(my) < 10) return;
+      // Waagerecht muss deutlich überwiegen (Faktor 1,5), nicht nur knapp. Sonst
+      // löst ein schräges Scrollen mit leichtem Seitwärtsdrall eine Aktion aus -
+      // und nach rechts wischen löscht inzwischen einen Artikel. Im Zweifel scrollen.
+      axis = Math.abs(mx) > Math.abs(my) * 1.5 ? 'x' : 'y';
+      if(axis === 'y'){ active = false; return; }   // Scrollen hat Vorfahrt
+    }
+    e.preventDefault();
+    // Ohne hinterlegte Aktion darf man in diese Richtung nicht ziehen.
+    if((mx < 0 && !onLeft) || (mx > 0 && !onRight)) { dx = 0; raw = 0; setX(0); wrap.classList.remove('armed'); return; }
+    raw = mx;                       // ungebremste Fingerbewegung, entscheidet übers Auslösen
+    dx = swipeOffset(mx);           // gebremster Versatz, nur fürs Aussehen
+    setX(dx);
+    wrap.classList.toggle('armed', Math.abs(raw) >= SWIPE_TRIGGER);
+  }, {passive:false});
+
+  const finish = () => {
+    if(!active){ wrap.classList.remove('armed'); return; }
+    active = false;
+    // Fürs Auslösen zählt die echte Fingerbewegung, nicht der gebremste Versatz -
+    // sonst müsste man jenseits der Schwelle unnatürlich weit ziehen.
+    const moved = raw;
+    wrap.classList.remove('armed');
+    release();
+    if(Math.abs(moved) >= SWIPE_TRIGGER){
+      const action = moved < 0 ? onLeft : onRight;
+      if(action){
+        // Klick direkt nach dem Wisch unterdrücken
+        fg.dataset.justSwiped = '1';
+        setTimeout(()=>{ delete fg.dataset.justSwiped; }, 400);
+        setTimeout(()=>{ try{ new Function(action).call(fg); }catch(err){ console.warn('Wisch-Aktion fehlgeschlagen:', err); } }, 120);
+      }
+    }
+    dx = 0; raw = 0;
+  };
+  fg.addEventListener('touchend', finish, {passive:true});
+  fg.addEventListener('touchcancel', finish, {passive:true});
+
+  // Klicks nach einem Wisch abfangen (Erfassungsphase, damit onclick nicht greift).
+  fg.addEventListener('click', e => {
+    if(fg.dataset.justSwiped === '1'){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
+}
+
+function enableAllSwipes(){
+  document.querySelectorAll('.swipe-wrap').forEach(enableSwipe);
+}
+
+// Baut eine Zeile in die Wisch-Hülle ein. actions = {left:{label,code}, right:{label,code}}
+function swipeWrap(inner, actions){
+  const l = actions.left, r = actions.right;
+  return `
+    <div class="swipe-wrap ${actions.big ? 'card-gap' : ''}"
+         data-swipe-left="${l ? escAttr(l.code) : ''}"
+         data-swipe-right="${r ? escAttr(r.code) : ''}">
+      <div class="swipe-bg">
+        <span class="swipe-act right">${r ? `<span class="swipe-lab"><span class="swipe-icon">${r.icon}</span><span>${r.label}</span></span>` : ''}</span>
+        <span class="swipe-act left">${l ? `<span class="swipe-lab"><span class="swipe-icon">${l.icon}</span><span>${l.label}</span></span>` : ''}</span>
+      </div>
+      <div class="swipe-fg">${inner}</div>
+    </div>`;
+}
+
+function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
 function renderRecipes(){
-  let list = allRecipes().slice();
+  // Ernährungsform und ausgeblendete Rezepte sind keine Filter, sondern Vorgaben -
+  // sie gelten immer, egal welche Chips gerade aktiv sind.
+  let list = allRecipes().filter(r => fitsDiet(r) && !state.hiddenRecipes.includes(r.id));
   // Nur Filter anwenden, deren Chip gerade auch sichtbar ist - sonst könnte ein alter,
   // nicht mehr angezeigter Filter die Liste unsichtbar leerfiltern.
   const active = availableFilters().filter(f=>state.filters[f.key]).map(f=>f.key);
-  if(active.includes('vegan')) list = list.filter(r=>r.tags.includes('Vegan'));
-  if(active.includes('vegetarisch')) list = list.filter(r=>r.tags.includes('Vegan')||r.tags.includes('Vegetarisch'));
   if(active.includes('fast')) list = list.filter(r=>r.time<=25);
   if(active.includes('proteinreich')) list = list.filter(r=>r.tags.includes('Proteinreich'));
   list.sort((a,b)=>(matchCount(b)+personalizationScore(b)) - (matchCount(a)+personalizationScore(a)));
@@ -1600,8 +2459,8 @@ function renderRecipes(){
   el.innerHTML = list.map(r=>{
     const m = matchCount(r);
     const isFav = state.favorites.has(r.id);
-    return `
-    <div class="recipe-card" onclick="openRecipe('${r.id}')">
+    return swipeWrap(`
+    <div class="recipe-card" style="margin-bottom:0" onclick="openRecipe('${r.id}')">
       <div class="recipe-img">
         ${ICONS.chef.replace('viewBox','width="34" height="34" viewBox')}
         <div class="recipe-fav" onclick="event.stopPropagation(); toggleFavorite('${r.id}')" title="${isFav?'Aus Lieblingsgerichten entfernen':'Als Lieblingsgericht merken'}">${isFav?ICONS.heartFill.replace('currentColor','#dc2626'):ICONS.heart}</div>
@@ -1618,8 +2477,56 @@ function renderRecipes(){
         <div class="match-note">${m}/${r.needs.length} Zutaten schon im Bestand</div>
         ${r.missing.length? `<div class="missing-note">${r.missing.length} fehlen: ${r.missing.join(', ')}</div>`:''}
       </div>
-    </div>`;
-  }).join('') || `<div class="empty">Keine Rezepte für diese Filter gefunden.</div>`;
+    </div>`, {
+      big: true,
+      left:  { icon:'🛒', label:'Zutaten',    code:`addMissingToShopping('${r.id}')` },
+      right: { icon:'✕',  label:'Ausblenden', code:`hideRecipe('${r.id}')` },
+    });
+  }).join('') || `<div class="empty">${emptyRecipeMessage()}</div>`;
+
+  // Hinweis, warum unter Umständen weniger Rezepte da sind als erwartet - sonst wirkt
+  // es wie ein Fehler, obwohl es genau die eingestellte Ernährungsform ist.
+  const mode = dietMode();
+  const note = document.getElementById('recipeDietNote');
+  if(note){
+    const hidden = state.hiddenRecipes.length;
+    const parts = [];
+    if(mode) parts.push(`Es werden nur ${mode === 'vegan' ? 'vegane' : 'vegetarische'} Rezepte angezeigt – so wie du es eingestellt hast.`);
+    if(hidden) parts.push(`${hidden} ausgeblendet (in den Einstellungen zurückholbar).`);
+    note.textContent = parts.join(' ');
+    note.style.display = parts.length ? 'block' : 'none';
+  }
+  enableAllSwipes();
+}
+
+function emptyRecipeMessage(){
+  const mode = dietMode();
+  if(state.hiddenRecipes.length) return 'Hier ist gerade nichts übrig.<br>In den Einstellungen kannst du ausgeblendete Rezepte zurückholen.';
+  if(mode) return `Für deine Einstellung „${mode === 'vegan' ? 'Vegan' : 'Vegetarisch'}“ passt hier gerade nichts.<br>Du kannst über „Eigene Rezeptidee“ eins erstellen lassen.`;
+  return 'Keine Rezepte für diese Filter gefunden.';
+}
+
+/* Weggewischte Rezepte werden nur ausgeblendet, nie gelöscht - ein Fehlwisch soll
+   nichts kosten. Zurückholen geht sofort über "Rückgängig" oder später in den
+   Einstellungen. */
+function hideRecipe(id){
+  const r = allRecipes().find(x=>x.id===id);
+  if(!r || state.hiddenRecipes.includes(id)) return;
+  state.hiddenRecipes.push(id);
+  renderAll();
+  toast(`„${r.name}“ ausgeblendet`, () => { unhideRecipe(id); });
+}
+
+function unhideRecipe(id){
+  state.hiddenRecipes = state.hiddenRecipes.filter(x => x !== id);
+  renderAll();
+}
+
+function unhideAllRecipes(){
+  const n = state.hiddenRecipes.length;
+  state.hiddenRecipes = [];
+  renderAll();
+  toast(n ? `${n} Rezept${n===1?'':'e'} wieder da` : 'Es war nichts ausgeblendet');
 }
 
 function openRecipe(id){
@@ -1676,8 +2583,37 @@ function openRecipeCard(id){
       <div class="paper-section">Zubereitung</div>
       <ol class="paper-steps">${r.steps.map(s=>`<li><span>${s}</span></li>`).join('')}</ol>
       ${r.tip ? `<div class="paper-tip">💡 ${r.tip}</div>` : ''}
-    </div>`;
+      <div class="paper-foot">Easy Kitchen</div>
+    </div>
+    <button class="btn btn-outline no-print" style="margin-top:14px;" onclick="printRecipeCard()">
+      Als PDF sichern oder drucken
+    </button>
+    <p class="subtle no-print" style="font-size:11px;text-align:center;margin:8px 0 0;">
+      Es öffnet sich das Druckfenster – dort wählst du „Als PDF sichern“.
+    </p>`;
   document.getElementById('recipeCardOverlay').classList.add('open');
+}
+
+/* Kein Zusatzprogramm, keine PDF-Bibliothek: Wir nutzen die eingebaute Druckfunktion
+   des Browsers. Das Drucklayout weiter oben blendet alles außer der Rezeptkarte aus,
+   deshalb landet genau die Karte sauber auf dem Blatt - und iPhone wie Computer
+   bieten in diesem Dialog von sich aus "Als PDF sichern" an. */
+function printRecipeCard(){
+  document.body.classList.add('printing-card');
+  const cleanup = () => {
+    document.body.classList.remove('printing-card');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+  // Sicherheitsnetz: Falls "afterprint" ausbleibt (kommt auf manchen Handys vor),
+  // räumen wir trotzdem auf, damit die App nicht im Druckzustand hängen bleibt.
+  setTimeout(cleanup, 60000);
+  try{
+    window.print();
+  }catch(e){
+    cleanup();
+    toast('Dein Browser bietet hier leider kein Drucken an');
+  }
 }
 
 function removeCustomRecipe(id){
@@ -1867,9 +2803,8 @@ function toggleShopItem(listKey, id){
   const item = list.find(i=>i.id===id);
   if(!item) return;
 
-  const res = addToInventory(item.label, guessCategory(item.label), todayOffset(estimateShelfLife(item.label)));
+  const res = addToInventory(item.label, guessCategory(item.label), initialExpiry(item.label));
   state.shopping[listKey] = list.filter(i=>i.id!==id);
-  if(listKey === 'restock' && item.dbId) syncCheckedShoppingItemToBackend(item.dbId);
   inventoryOrderCache = null;
   renderAll();
   toast(res && res.status === 'updated'
@@ -1884,8 +2819,8 @@ function renderShopping(){
   recipeCard.innerHTML = state.shopping.recipeItems.length ? state.shopping.recipeItems.map(i=>`
     <div class="shop-item">
       <div class="checkbox" onclick="toggleShopItem('recipeItems','${i.id}')"></div>
-      <div class="label" style="flex:1"><strong style="font-size:13.5px;">${escapeHtml(i.label)}</strong><div style="font-size:11px;color:var(--text-muted)">für ${escapeHtml(i.fromRecipe||'')}</div></div>
-    </div>`).join('') : `<div class="empty">Noch nichts hier. Öffne ein Rezept und füg fehlende Zutaten hinzu.</div>`;
+      <div class="label" style="flex:1"><strong style="font-size:13.5px;">${escapeHtml(i.label)}</strong><div style="font-size:11px;color:var(--text-muted)">${i.fromRecipe === 'geht zur Neige' ? 'geht zur Neige' : 'für ' + escapeHtml(i.fromRecipe||'')}</div></div>
+    </div>`).join('') : `<div class="empty">Noch nichts hier. Öffne ein Rezept und füg fehlende Zutaten hinzu – oder wisch im Bestand einen Artikel nach rechts.</div>`;
 
   const restockCard = document.getElementById('shopRestockCard');
   restockCard.innerHTML = state.shopping.restock.length ? state.shopping.restock.map(i=>`
@@ -1966,7 +2901,10 @@ function applyNoteResult(text, kind, data){
   if(data.intent === 'expiry' && data.itemName){
     const item = findInventoryItem(data.itemName);
     if(item && data.days){
+      // Der Nutzer hat das Datum selbst gesagt ("die Milch läuft Freitag ab") -
+      // das ist eine Tatsache, keine Schätzung der App.
       item.expiry = todayOffset(data.days);
+      item.exact = true;
     }
   } else if(data.intent === 'favorite_existing' && data.recipeName){
     const wanted = data.recipeName.toLowerCase();
@@ -2140,6 +3078,264 @@ function startPersonalization(){
   closeSheet('onboardingOverlay');
   saveState();
   openPersonalizeSheet();
+}
+
+/* ---------------- Gemeinsamer Haushalt ----------------
+   Mehrere Personen (Familie/Freunde) teilen sich über einen Haushalts-Code einen
+   gemeinsamen Bestand: gründen ODER mit Code beitreten, dann läuft im Hintergrund
+   alle 10 Sekunden ein Abgleich mit der Datenbank (Vercel + Neon). Bewusst KEIN
+   Muss - wer "Später" wählt, nutzt die App wie bisher rein lokal auf diesem Gerät.
+
+   Wichtig für die Zuverlässigkeit: addToInventory() bleibt komplett synchron und
+   funktioniert immer sofort (Offline-First) - der Upload zur Datenbank läuft im
+   Hintergrund und darf jederzeit fehlschlagen (kein Internet, Server down), ohne
+   dass die App das merkt. Erst der nächste Sync holt es nach. */
+let householdSheetMode = 'start';   // 'start' | 'create' | 'join' | 'joined'
+let householdSyncTimer = null;
+let householdBusy = false;
+
+function maybeShowHouseholdSetup(){
+  // Schon in einem Haushalt oder schon mal gefragt/übersprungen -> nicht nochmal zeigen.
+  if(state.household.id || state.household.asked) return;
+  householdSheetMode = 'start';
+  renderHouseholdSheet();
+  document.getElementById('householdOverlay').classList.add('open');
+}
+
+// Fester Weg über die Einstellungen, jederzeit erreichbar - nicht nur das Popup.
+function openHouseholdSheet(){
+  householdSheetMode = state.household.id ? 'joined' : 'start';
+  renderHouseholdSheet();
+  document.getElementById('householdOverlay').classList.add('open');
+}
+
+function dismissHouseholdSetup(){
+  state.household.asked = true;
+  closeSheet('householdOverlay');
+  saveState();
+  maybeShowOnboarding();
+}
+
+function householdShowCreateForm(){ householdSheetMode = 'create'; renderHouseholdSheet(); }
+function householdShowJoinForm(){ householdSheetMode = 'join'; renderHouseholdSheet(); }
+function householdShowStart(){ householdSheetMode = 'start'; renderHouseholdSheet(); }
+
+function renderHouseholdSheet(){
+  const content = document.getElementById('householdSheetContent');
+  if(!content) return;
+  const h = state.household;
+
+  if(householdSheetMode === 'joined' && h.id){
+    content.innerHTML = `
+      <h2>Küche geteilt 🍽️</h2>
+      <p class="subtle" style="margin:10px 0 16px;">Ihr seht denselben Bestand und dieselbe Einkaufsliste - automatisch aktuell auf allen Geräten (Abgleich etwa alle 10 Sekunden).</p>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="expiry-item" style="border-bottom:none;padding:4px 0;">
+          <div class="info" style="flex:1">
+            <strong style="font-size:13.5px;">Haushalts-Code</strong>
+            <div style="font-size:15px;font-weight:700;letter-spacing:.5px;margin-top:4px;">${escapeHtml(h.code)}</div>
+            <div style="font-size:11.5px;color:var(--text-muted);margin-top:4px;">Diesen Code gibst du an Familie/Freunde weiter, damit sie beitreten können.</div>
+          </div>
+        </div>
+      </div>
+      ${h.members.length ? `
+      <div class="section-title">Mitglieder</div>
+      <div class="card" style="margin-bottom:16px;">
+        ${h.members.map(m => `
+          <div class="expiry-item">
+            <div class="info" style="flex:1"><strong style="font-size:13.5px;">${escapeHtml(m.name)}${m.id===h.memberId ? ' (du)' : ''}</strong></div>
+          </div>`).join('')}
+      </div>` : ''}
+      <button class="btn btn-outline" onclick="closeSheet('householdOverlay')">Schließen</button>
+    `;
+    return;
+  }
+
+  if(householdSheetMode === 'create'){
+    content.innerHTML = `
+      <h2>Haushalt gründen</h2>
+      <p class="subtle" style="margin:10px 0 16px;">Wie heißt du? Damit andere sehen, wer was hinzugefügt hat.</p>
+      <input id="hhNameInput" type="text" maxlength="30" placeholder="Dein Name"
+             style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;background:var(--bg);margin-bottom:14px;" />
+      <button class="btn btn-primary" style="margin-bottom:8px;" onclick="submitCreateHousehold()" ${householdBusy?'disabled':''}>${householdBusy?'Einen Moment …':'Haushalt gründen'}</button>
+      <button class="btn btn-outline" onclick="householdShowStart()">Zurück</button>
+    `;
+    const el = document.getElementById('hhNameInput');
+    if(el){ el.focus(); el.onkeydown = e => { if(e.key==='Enter'){ e.preventDefault(); submitCreateHousehold(); } }; }
+    return;
+  }
+
+  if(householdSheetMode === 'join'){
+    content.innerHTML = `
+      <h2>Mit Code beitreten</h2>
+      <p class="subtle" style="margin:10px 0 16px;">Code von Familie/Freunden eingeben und deinen Namen.</p>
+      <input id="hhCodeInput" type="text" maxlength="40" placeholder="Haushalts-Code"
+             style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;background:var(--bg);margin-bottom:10px;text-transform:uppercase;" />
+      <input id="hhNameInput2" type="text" maxlength="30" placeholder="Dein Name"
+             style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;background:var(--bg);margin-bottom:14px;" />
+      <button class="btn btn-primary" style="margin-bottom:8px;" onclick="submitJoinHousehold()" ${householdBusy?'disabled':''}>${householdBusy?'Einen Moment …':'Beitreten'}</button>
+      <button class="btn btn-outline" onclick="householdShowStart()">Zurück</button>
+    `;
+    const el = document.getElementById('hhCodeInput');
+    if(el) el.focus();
+    return;
+  }
+
+  // 'start'
+  content.innerHTML = `
+    <h2>Küche teilen? 🍽️</h2>
+    <p class="subtle" style="margin:10px 0 18px;">Gründe einen Haushalt oder tritt mit einem Code bei - dann seht ihr als Familie denselben Bestand und dieselbe Einkaufsliste, automatisch aktuell auf allen Geräten. Du kannst Easy Kitchen aber auch einfach allein weiter nutzen.</p>
+    <button class="btn btn-primary" style="margin-bottom:8px;" onclick="householdShowCreateForm()">Haushalt gründen</button>
+    <button class="btn btn-outline" style="margin-bottom:8px;" onclick="householdShowJoinForm()">Mit Code beitreten</button>
+    <button class="btn btn-outline" onclick="dismissHouseholdSetup()">Später / allein nutzen</button>
+  `;
+}
+
+function pickMemberColor(){
+  const palette = ['#5e7a4a','#c07a3e','#4a7a8c','#a04a5e','#7a5ea0','#8c9c4a'];
+  return palette[Math.floor(Math.random() * palette.length)];
+}
+
+async function submitCreateHousehold(){
+  const nameEl = document.getElementById('hhNameInput');
+  const name = nameEl ? nameEl.value.trim() : '';
+  if(!name){ toast('Bitte deinen Namen eingeben'); return; }
+  if(householdBusy) return;
+  householdBusy = true; renderHouseholdSheet();
+  try{
+    const res = await fetch('/api/household/create', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ memberName:name, color: pickMemberColor() }),
+    });
+    if(!res.ok) throw new Error('status ' + res.status);
+    const data = await res.json();
+    applyHouseholdJoined(data);
+    toast(`Haushalt gegründet: ${data.code}`);
+  }catch(err){
+    console.warn('Haushalt gründen fehlgeschlagen:', err);
+    toast('Konnte keinen Haushalt gründen - bitte Internetverbindung prüfen');
+  }finally{
+    householdBusy = false; renderHouseholdSheet();
+  }
+}
+
+async function submitJoinHousehold(){
+  const codeEl = document.getElementById('hhCodeInput');
+  const nameEl = document.getElementById('hhNameInput2');
+  const code = codeEl ? codeEl.value.trim() : '';
+  const name = nameEl ? nameEl.value.trim() : '';
+  if(!code || !name){ toast('Bitte Code und Namen eingeben'); return; }
+  if(householdBusy) return;
+  householdBusy = true; renderHouseholdSheet();
+  try{
+    const res = await fetch('/api/household/join', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ code, memberName:name, color: pickMemberColor() }),
+    });
+    if(res.status === 404){ toast('Diesen Code gibt es nicht - bitte prüfen'); return; }
+    if(res.status === 409){ toast('Diesen Namen gibt es in diesem Haushalt schon'); return; }
+    if(!res.ok) throw new Error('status ' + res.status);
+    const data = await res.json();
+    applyHouseholdJoined(data);
+    toast(`Willkommen im Haushalt ${data.code}!`);
+  }catch(err){
+    console.warn('Haushalt beitreten fehlgeschlagen:', err);
+    toast('Konnte nicht beitreten - bitte Internetverbindung prüfen');
+  }finally{
+    householdBusy = false; renderHouseholdSheet();
+  }
+}
+
+function applyHouseholdJoined(data){
+  state.household.id = data.householdId;
+  state.household.memberId = data.memberId;
+  state.household.memberName = data.name;
+  state.household.code = data.code;
+  state.household.asked = true;
+  state.lastSync = 0;   // beim ersten Sync danach alles vom Server holen
+  saveState();
+  householdSheetMode = 'joined';
+  renderHouseholdSheet();
+  startHouseholdSync();
+  syncFromDatabase();
+}
+
+// Lädt einen frisch lokal hinzugefügten Artikel im Hintergrund hoch. Läuft NIE
+// blockierend - schlägt der Upload fehl (offline, Server-Fehler), bleibt der Artikel
+// einfach lokal und wird beim nächsten erfolgreichen Sync nachgereicht bzw. beim
+// nächsten Versuch erneut mitgeschickt (kein Datenverlust, höchstens ein doppelter
+// Eintrag in der Datenbank, den mergeInventory() beim Zurückkommen sauber abfängt).
+function syncNewItemToBackend(item){
+  if(!state.household.id || !state.household.memberId) return;
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  fetch('/api/inventory/add', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      householdId: state.household.id,
+      memberId: state.household.memberId,
+      name: item.name,
+      category: item.category,
+      expiry: item.expiry ? item.expiry.toISOString() : null,
+      exact: Boolean(item.exact),
+    }),
+  })
+    .then(res => res.ok ? res.json() : Promise.reject(new Error('status ' + res.status)))
+    .then(data => { item.dbId = data.id; saveState(); })
+    .catch(err => console.warn('Artikel konnte nicht mit dem Haushalt geteilt werden (wird lokal behalten):', err));
+}
+
+// Gleicht Server-Artikel mit dem lokalen Bestand ab, OHNE Duplikate zu erzeugen:
+// 1) schon über die Datenbank-ID bekannt -> nur auffrischen
+// 2) noch nicht hochgeladener lokaler Artikel mit demselben Namen -> zusammenführen
+// 3) sonst wirklich neu (von einem anderen Haushaltsmitglied) -> neu anlegen
+function mergeInventory(serverItems){
+  if(!Array.isArray(serverItems)) return;
+  serverItems.forEach(s => {
+    let local = state.inventory.find(i => i.dbId === s.id);
+    if(!local) local = state.inventory.find(i => !i.dbId && namesMatch(i.name, s.name));
+    const expiry = s.expiry ? new Date(s.expiry) : null;
+    if(local){
+      local.dbId = s.id;
+      local.name = s.name;
+      local.category = s.category;
+      local.expiry = (expiry && !isNaN(expiry.getTime())) ? expiry : null;
+      local.exact = Boolean(s.exact);
+      local.addedByMemberId = s.added_by_member_id;
+    } else {
+      state.inventory.push({
+        id: ++idCounter,
+        dbId: s.id,
+        name: s.name,
+        category: s.category,
+        expiry: (expiry && !isNaN(expiry.getTime())) ? expiry : null,
+        exact: Boolean(s.exact),
+        addedByMemberId: s.added_by_member_id,
+      });
+    }
+  });
+}
+
+async function syncFromDatabase(){
+  if(!state.household.id) return;
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return;
+  try{
+    const url = '/api/sync?householdId=' + encodeURIComponent(state.household.id) + '&since=' + (state.lastSync || 0);
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('status ' + res.status);
+    const data = await res.json();
+    mergeInventory(data.inventory);
+    if(Array.isArray(data.members)) state.household.members = data.members;
+    state.lastSync = data.timestamp || Date.now();
+    saveState();
+    renderAll();
+  }catch(err){
+    console.warn('Haushalt-Abgleich fehlgeschlagen (nächster Versuch in 10s):', err);
+  }
+}
+
+function startHouseholdSync(){
+  if(householdSyncTimer) return;   // läuft schon
+  householdSyncTimer = setInterval(syncFromDatabase, 10000);
 }
 
 /* ---------------- Einstellungen & Farbwelt ----------------
@@ -2398,26 +3594,41 @@ function openSettingsSheet(opts){
       ${p.done ? 'Personalisierung ändern' : 'Jetzt personalisieren'}
     </button>
 
-    <div class="section-title">Haushalt</div>
-    ${state.householdId ? `
-      <div class="card" style="margin-bottom:10px;">
-        <div class="expiry-item" style="border-bottom:none;padding:4px 0;">
-          <div class="info" style="flex:1">
-            <strong style="font-size:13.5px;">Code zum Teilen: ${escapeHtml(state.household.code)}</strong>
-            <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
-              ${state.household.members.length ? `${state.household.members.length} Mitglied${state.household.members.length===1?'':'er'}: ${escapeHtml(state.household.members.map(m=>m.name).join(', '))}` : `Angemeldet als ${escapeHtml(state.memberName)}`}
-            </div>
+    ${state.hiddenRecipes.length ? `
+    <div class="section-title">Ausgeblendete Rezepte</div>
+    <p class="subtle" style="font-size:12px;margin:-4px 0 10px;">
+      Du hast ${state.hiddenRecipes.length} Rezept${state.hiddenRecipes.length===1?'':'e'} nach links weggewischt.
+      Gelöscht ist nichts – du kannst sie jederzeit zurückholen.
+    </p>
+    <div class="card" style="margin-bottom:10px;">
+      ${state.hiddenRecipes.map(id=>{
+        const r = allRecipes().find(x=>x.id===id);
+        return `<div class="expiry-item">
+          <div class="info" style="flex:1"><strong style="font-size:13.5px;">${escapeHtml(r ? r.name : 'Unbekanntes Rezept')}</strong></div>
+          <button onclick="unhideRecipe('${id}'); openSettingsSheet({keepEdit:true});"
+                  style="border:none;background:var(--primary-light);color:var(--primary-dark);font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border-radius:14px;cursor:pointer;">Zurückholen</button>
+        </div>`;
+      }).join('')}
+    </div>
+    <button class="btn btn-outline" style="margin-bottom:16px;" onclick="unhideAllRecipes(); openSettingsSheet({keepEdit:true});">Alle zurückholen</button>
+    ` : ''}
+
+    <div class="section-title">Haushalt teilen</div>
+    <div class="card" style="margin-bottom:10px;">
+      <div class="expiry-item" style="border-bottom:none;padding:4px 0;">
+        <div class="info" style="flex:1">
+          <strong style="font-size:13.5px;">${state.household.id ? escapeHtml(state.household.code) : 'Noch kein Haushalt'}</strong>
+          <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
+            ${state.household.id
+              ? `${state.household.members.length || 1} Mitglied${(state.household.members.length||1)===1?'':'er'} - Bestand wird automatisch geteilt`
+              : 'App läuft bisher nur lokal auf diesem Gerät.'}
           </div>
         </div>
       </div>
-      <p class="subtle" style="font-size:12px;margin:-4px 0 10px;">Bestand und Einkaufsliste werden alle 10 Sekunden mit den anderen Mitgliedern abgeglichen.</p>
-      <button class="btn btn-outline" style="margin-bottom:16px;" onclick="leaveHousehold()">Haushalt verlassen</button>
-    ` : `
-      <p class="subtle" style="font-size:12px;margin:-4px 0 10px;">
-        Teile Bestand und Einkaufsliste mit deiner Familie – gründe einen Haushalt oder tritt mit einem Code bei.
-      </p>
-      <button class="btn btn-primary" style="margin-bottom:16px;" onclick="closeSheet('settingsOverlay'); showFirstTimeSetup();">Haushalt einrichten</button>
-    `}
+    </div>
+    <button class="btn btn-outline" style="margin-bottom:16px;" onclick="closeSheet('settingsOverlay'); openHouseholdSheet();">
+      ${state.household.id ? 'Haushalt verwalten' : 'Haushalt gründen oder beitreten'}
+    </button>
 
     <div class="section-title">Über die App</div>
     <div class="card" style="margin-bottom:10px;">
@@ -2648,274 +3859,6 @@ function renderPersonalizeStep(){
   }
 }
 
-/* ---------------- Haushalt-Sharing ----------------
-   Mehrere Familienmitglieder teilen sich einen Haushalt (per Code verbunden) und sehen
-   denselben Bestand + dieselbe Einkaufsliste. Offline-tauglich: jede Änderung landet
-   SOFORT lokal (localStorage, wie bisher) und wird danach im Hintergrund zum Server
-   geschickt - klappt das nicht (kein Netz), bleibt die Änderung einfach lokal und wird
-   beim nächsten erfolgreichen Sync automatisch nachgereicht bzw. vom nächsten Sync mit
-   erfasst. Es gibt absichtlich KEINEN Modus, der die App blockiert, wenn kein Haushalt
-   eingerichtet ist - Easy Kitchen funktioniert weiterhin vollständig allein/lokal. */
-
-const MEMBER_COLORS = ['#e07a5f','#3d5a80','#81b29a','#f2cc8f','#9b5de5','#00bbf9','#f15bb5','#606c38'];
-function pickMemberColor(){
-  return MEMBER_COLORS[Math.floor(Math.random()*MEMBER_COLORS.length)];
-}
-
-async function safeJson(res){
-  try{ return await res.json(); }catch(e){ return null; }
-}
-
-function showFirstTimeSetup(){
-  const content = document.getElementById('householdSheetContent');
-  content.innerHTML = `
-    <h2>Küche teilen? 🍽️</h2>
-    <p class="subtle" style="margin:10px 0 18px;">
-      Gründe einen Haushalt oder tritt mit einem Code bei – dann seht ihr als Familie
-      denselben Bestand und dieselbe Einkaufsliste, automatisch aktuell auf allen Geräten.
-      Du kannst Easy Kitchen aber auch einfach allein weiter nutzen.
-    </p>
-    <button class="btn btn-primary" onclick="createHousehold()">Haushalt gründen</button>
-    <button class="btn btn-outline" style="margin-top:8px;" onclick="joinHousehold()">Mit Code beitreten</button>
-    <button class="btn btn-ghost" style="margin-top:8px;" onclick="dismissHouseholdSetup()">Später / allein nutzen</button>
-  `;
-  document.getElementById('householdOverlay').classList.add('open');
-}
-
-function dismissHouseholdSetup(){
-  state.householdSetupAsked = true;
-  closeSheet('householdOverlay');
-  saveState();
-}
-
-async function createHousehold(){
-  const name = (prompt('Wie heißt du? (wird den anderen Haushaltsmitgliedern angezeigt)') || '').trim();
-  if(!name) return;
-  try{
-    const res = await fetch('/api/household/create', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ memberName: name, color: pickMemberColor() }),
-    });
-    const data = await safeJson(res);
-    if(!res.ok || !data || !data.householdId){
-      alert((data && data.error) || 'Haushalt konnte nicht erstellt werden. Bitte später erneut versuchen.');
-      return;
-    }
-    applyHouseholdLogin(data);
-    closeSheet('householdOverlay');
-    alert(`Haushalt gegründet! 🎉\n\nDein Code zum Teilen: ${data.code}\n\nGib diesen Code den anderen Familienmitgliedern, damit sie beitreten können.`);
-    await syncFromDatabase();
-    renderAll();
-    startHouseholdSyncLoop();
-  }catch(e){
-    alert('Keine Verbindung zum Server – bitte prüfe deine Internetverbindung und versuch es später erneut.');
-  }
-}
-
-async function joinHousehold(){
-  const code = (prompt('Haushalts-Code eingeben:') || '').trim().toUpperCase();
-  if(!code) return;
-  const name = (prompt('Wie heißt du? (wird den anderen Haushaltsmitgliedern angezeigt)') || '').trim();
-  if(!name) return;
-  try{
-    const res = await fetch('/api/household/join', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ code, memberName: name, color: pickMemberColor() }),
-    });
-    const data = await safeJson(res);
-    if(!res.ok || !data || !data.householdId){
-      alert((data && data.error) || 'Beitritt fehlgeschlagen. Bitte prüfe den Code.');
-      return;
-    }
-    applyHouseholdLogin(data);
-    closeSheet('householdOverlay');
-    alert(`Willkommen! Du bist jetzt als „${name}“ mit dem Haushalt verbunden.`);
-    await syncFromDatabase();
-    renderAll();
-    startHouseholdSyncLoop();
-  }catch(e){
-    alert('Keine Verbindung zum Server – bitte prüfe deine Internetverbindung und versuch es später erneut.');
-  }
-}
-
-function applyHouseholdLogin(data){
-  state.householdId = data.householdId;
-  state.memberId = data.memberId;
-  state.memberName = data.name;
-  state.household.code = data.code;
-  state.householdSetupAsked = true;
-  state.lastSync = 0;   // beim ersten Sync danach wirklich alles vom Server holen
-  saveState();
-}
-
-function leaveHousehold(){
-  if(!confirm('Haushalt wirklich verlassen? Dein Bestand bleibt auf diesem Gerät erhalten, wird aber nicht mehr mit den anderen geteilt.')) return;
-  if(householdSyncTimer){ clearInterval(householdSyncTimer); householdSyncTimer = null; }
-  state.householdId = null;
-  state.memberId = null;
-  state.memberName = '';
-  state.household = { code:'', members:[] };
-  state.lastSync = 0;
-  saveState();
-  closeSheet('settingsOverlay');
-  toast('Haushalt verlassen – du nutzt Easy Kitchen jetzt wieder allein.');
-}
-
-let householdSyncTimer = null;
-function startHouseholdSyncLoop(){
-  if(householdSyncTimer) return;   // läuft schon - nicht doppelt starten
-  householdSyncTimer = setInterval(() => {
-    if(state.householdId) syncFromDatabase().then(renderAll);
-  }, 10000);
-}
-
-function initHousehold(){
-  if(state.householdId){
-    syncFromDatabase().then(renderAll);
-    startHouseholdSyncLoop();
-  } else if(!state.householdSetupAsked){
-    showFirstTimeSetup();
-  }
-}
-
-// Schickt einen neu angelegten Bestand-Artikel an den Haushalts-Server (falls verbunden).
-// Läuft bewusst NACH dem lokalen Speichern in addToInventory() - die App bleibt dadurch
-// offline-fähig: ohne Verbindung bleibt der Artikel einfach lokal und taucht beim nächsten
-// erfolgreichen Sync automatisch auch für die anderen Haushaltsmitglieder auf.
-async function syncNewInventoryItemToBackend(item){
-  if(!state.householdId || !state.memberId) return;
-  try{
-    const res = await fetch('/api/inventory/add', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        householdId: state.householdId,
-        memberId: state.memberId,
-        name: item.name,
-        category: item.category,
-        expiry: item.expiry.toISOString(),
-        exact: true,
-      }),
-    });
-    if(!res.ok) return;   // bleibt lokal, kein harter Fehler für die Person sichtbar
-    const data = await safeJson(res);
-    // Bewusst NICHT item.id ersetzen (das wird an vielen Stellen ungequotet in
-    // onclick-Attribute eingesetzt, z.B. onclick="removeItem(${i.id})" - eine
-    // UUID würde dort ungültiges JavaScript erzeugen). Stattdessen die Server-ID
-    // separat merken, für Abgleich/Zusammenführung beim nächsten Sync.
-    if(data && data.id) item.dbId = data.id;
-  }catch(e){
-    console.warn('Konnte Artikel nicht an den Haushalt senden (evtl. offline):', e);
-  }
-}
-
-async function syncNewShoppingItemToBackend(item){
-  if(!state.householdId || !state.memberId) return;
-  try{
-    const res = await fetch('/api/shopping/add', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ householdId: state.householdId, memberId: state.memberId, label: item.label }),
-    });
-    if(!res.ok) return;
-    const data = await safeJson(res);
-    if(data && data.id) item.dbId = data.id;
-  }catch(e){
-    console.warn('Konnte Einkaufsliste nicht mit dem Haushalt synchronisieren (evtl. offline):', e);
-  }
-}
-
-async function syncCheckedShoppingItemToBackend(dbId){
-  if(!state.householdId || !state.memberId) return;
-  try{
-    await fetch('/api/shopping/check', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ householdId: state.householdId, memberId: state.memberId, id: dbId, checked: true }),
-    });
-  }catch(e){
-    console.warn('Konnte "erledigt" nicht mit dem Haushalt synchronisieren (evtl. offline):', e);
-  }
-}
-
-// Holt Bestand + Einkaufsliste + Mitglieder vom Server und führt sie mit dem lokalen
-// Stand zusammen. Konflikt-Auflösung: der Server gewinnt (einfache, für eine Familie
-// völlig ausreichende Regel - Konflikte sind bei einem 10-Sekunden-Intervall selten).
-async function syncFromDatabase(){
-  if(!state.householdId) return;
-  try{
-    const url = `/api/sync?householdId=${encodeURIComponent(state.householdId)}&since=${encodeURIComponent(state.lastSync||0)}`;
-    const res = await fetch(url);
-    const data = await safeJson(res);
-    if(!res.ok){
-      console.warn('Haushalt-Sync fehlgeschlagen:', data && data.error);
-      return;   // Fehler/offline: lokalen Stand einfach behalten, kein Datenverlust
-    }
-    if(!data) return;
-    mergeInventoryFromBackend(data.inventory || []);
-    mergeShoppingFromBackend(data.shopping || []);
-    mergeMembersFromBackend(data.members || []);
-    state.lastSync = data.timestamp || Date.now();
-    saveState();
-  }catch(e){
-    console.warn('Haushalt-Server nicht erreichbar (evtl. offline):', e);
-  }
-}
-
-function mergeInventoryFromBackend(rows){
-  let changed = false;
-  rows.forEach(r => {
-    const localByDbId = state.inventory.find(i => i.dbId === r.id);
-    if(localByDbId){
-      // Backend gewinnt bei Konflikten (siehe Kommentar bei syncFromDatabase).
-      localByDbId.name = r.name;
-      localByDbId.category = r.category || localByDbId.category;
-      if(r.expiry) localByDbId.expiry = new Date(r.expiry);
-      changed = true;
-      return;
-    }
-    const localByName = findInventoryItem(r.name);
-    if(localByName && !localByName.dbId){
-      // Wurde von diesem Gerät kurz zuvor angelegt - jetzt vom Server bestätigt.
-      localByName.dbId = r.id;
-      return;
-    }
-    // Neuer Artikel, den ein anderes Haushaltsmitglied hinzugefügt hat.
-    state.inventory.push({
-      id: ++idCounter,
-      dbId: r.id,
-      name: r.name,
-      category: r.category || 'Kühlschrank',
-      expiry: r.expiry ? new Date(r.expiry) : todayOffset(14),
-    });
-    changed = true;
-  });
-  if(changed) inventoryOrderCache = null;
-}
-
-function mergeShoppingFromBackend(rows){
-  const backendIds = new Set(rows.map(r => r.id));
-  // Von einem anderen Mitglied abgehakte/entfernte Einträge auch hier rausnehmen.
-  state.shopping.restock = state.shopping.restock.filter(i => !i.dbId || backendIds.has(i.dbId));
-  rows.forEach(r => {
-    const existing = state.shopping.restock.find(i => i.dbId === r.id);
-    if(existing){ existing.label = r.label; return; }
-    // Schon lokal vorhanden, aber noch ohne dbId (gerade erst selbst hinzugefügt)?
-    const pending = state.shopping.restock.find(i => !i.dbId && namesMatch(i.label, r.label));
-    if(pending){ pending.dbId = r.id; return; }
-    state.shopping.restock.unshift({
-      id: 'db'+r.id, dbId: r.id, label: r.label, checked:false, created: new Date(r.created_at).getTime(),
-    });
-  });
-  state.shopping.restock = state.shopping.restock.slice(0, 20);
-}
-
-function mergeMembersFromBackend(rows){
-  state.household.members = rows.map(r => ({ id:r.id, name:r.name, color:r.color }));
-}
-
 /* ---------------- Render all ---------------- */
 function renderAll(){
   renderDashboard();
@@ -2930,8 +3873,9 @@ applyTheme();
 renderNav();
 renderAll();
 if(!hadSavedState) saveState(); // Beispieldaten beim allerersten Start direkt sichern
-maybeShowOnboarding();
-initHousehold();
+// War schon in einem Haushalt (z.B. nach Neuladen): sofort weiter synchronisieren.
+if(state.household.id){ startHouseholdSync(); syncFromDatabase(); }
+if(state.household.id || state.household.asked){ maybeShowOnboarding(); } else { maybeShowHouseholdSetup(); }
 </script>
 </body>
 </html>
