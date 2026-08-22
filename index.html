@@ -686,7 +686,7 @@
 <script>
 /* Wird bei jeder Auslieferung hochgezählt - so lässt sich in den Einstellungen
    sofort sehen, ob die neueste Version wirklich geladen wurde. */
-const APP_VERSION = '2026.08.22-1';
+const APP_VERSION = '2026.08.22-2';
 
 /* ---------------- Icons ---------------- */
 const ICONS = {
@@ -893,6 +893,19 @@ function initialExpiry(name, estDays){
   return todayOffset(Number.isFinite(d) && d >= 1 && d <= 90 ? Math.round(d) : info.days);
 }
 
+// Auch ein "selbst eingetragenes" (exact) Datum muss im plausiblen Rahmen liegen -
+// niemand trägt wirklich ein Datum von 1970 oder in 50 Jahren ein. Ein Datum außerhalb
+// dieses Rahmens ist erkennbar kaputte Technik (z.B. new Date(null) = 1.1.1970), keine
+// echte Angabe, und wird wie "kein Datum" behandelt statt "abgelaufen seit Jahren"
+// vorzugaukeln (siehe app-startprompt.md: "Lieber schweigen als raten").
+const IMPLAUSIBLE_PAST_DAYS = 1095;    // > 3 Jahre abgelaufen glaubt ihr niemand
+const IMPLAUSIBLE_FUTURE_DAYS = 1095;  // > 3 Jahre haltbar mit echtem Datum ist unrealistisch
+function isPlausibleExpiry(d){
+  if(!d || isNaN(d.getTime())) return false;
+  const diffDays = (d - new Date()) / (1000*60*60*24);
+  return diffDays >= -IMPLAUSIBLE_PAST_DAYS && diffDays <= IMPLAUSIBLE_FUTURE_DAYS;
+}
+
 function loadState(){
   try{
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -910,6 +923,13 @@ function loadState(){
         // Sachen steht das echte Datum auf der Packung. Solche geratenen Daten fliegen
         // hier raus; selbst eingetragene (exact) bleiben natürlich erhalten.
         if(!item.exact && !isFreshItem(item.name)) item.expiry = null;
+        // Reparatur: ein technisch kaputtes "exact"-Datum (z.B. durch einen früheren
+        // Programmfehler auf 1.1.1970 gesetzt) fälschlich als "seit Jahren abgelaufen"
+        // anzuzeigen wäre schlimmer als gar keine Aussage zu machen.
+        if(item.exact && item.expiry && !isPlausibleExpiry(item.expiry)){
+          item.expiry = null;
+          item.exact = false;
+        }
         return item;
       });
       // Migration: Die früheren Demo-Artikel aus der Prototyp-Zeit (feste IDs 1-12 mit
@@ -3256,8 +3276,17 @@ function applyHouseholdJoined(data){
   saveState();
   householdSheetMode = 'joined';
   renderHouseholdSheet();
+  // Wichtig: Artikel, die schon VOR dem Gründen/Beitreten im Bestand standen, sind
+  // sonst für den Rest des Haushalts unsichtbar - nur neu hinzugefügte würden ab jetzt
+  // hochgeladen. Deshalb den kompletten bisherigen Bestand jetzt einmalig nachreichen.
+  uploadExistingInventoryToHousehold();
   startHouseholdSync();
   syncFromDatabase();
+}
+
+function uploadExistingInventoryToHousehold(){
+  if(!state.household.id || !state.household.memberId) return;
+  state.inventory.filter(item => !item.dbId).forEach(item => syncNewItemToBackend(item));
 }
 
 // Lädt einen frisch lokal hinzugefügten Artikel im Hintergrund hoch. Läuft NIE
@@ -3293,13 +3322,17 @@ function mergeInventory(serverItems){
   serverItems.forEach(s => {
     let local = state.inventory.find(i => i.dbId === s.id);
     if(!local) local = state.inventory.find(i => !i.dbId && namesMatch(i.name, s.name));
-    const expiry = s.expiry ? new Date(s.expiry) : null;
+    let expiry = s.expiry ? new Date(s.expiry) : null;
+    // Genau wie beim Laden aus localStorage: ein technisch kaputtes Datum (z.B. aus
+    // einer älteren, fehlerhaften Version) nie als "seit Jahren abgelaufen" übernehmen.
+    if(expiry && !isPlausibleExpiry(expiry)) expiry = null;
+    const exact = expiry ? Boolean(s.exact) : false;
     if(local){
       local.dbId = s.id;
       local.name = s.name;
       local.category = s.category;
       local.expiry = (expiry && !isNaN(expiry.getTime())) ? expiry : null;
-      local.exact = Boolean(s.exact);
+      local.exact = exact;
       local.addedByMemberId = s.added_by_member_id;
     } else {
       state.inventory.push({
@@ -3308,7 +3341,7 @@ function mergeInventory(serverItems){
         name: s.name,
         category: s.category,
         expiry: (expiry && !isNaN(expiry.getTime())) ? expiry : null,
-        exact: Boolean(s.exact),
+        exact: exact,
         addedByMemberId: s.added_by_member_id,
       });
     }
