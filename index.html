@@ -686,7 +686,7 @@
 <script>
 /* Wird bei jeder Auslieferung hochgezählt - so lässt sich in den Einstellungen
    sofort sehen, ob die neueste Version wirklich geladen wurde. */
-const APP_VERSION = '2026.08.22-3';
+const APP_VERSION = '2026.08.23-1';
 
 /* ---------------- Icons ---------------- */
 const ICONS = {
@@ -769,6 +769,11 @@ const state = {
     createdByMemberId: null,
   },
   lastSync: 0,   // Zeitstempel (ms) der letzten erfolgreichen Synchronisierung mit dem Haushalt
+  // Alle Haushalte, in denen dieses Gerät Mitglied ist (z.B. Zuhause UND WG am
+  // Studienort) - "household" oben ist immer nur der GERADE AKTIVE davon.
+  // Jeder Eintrag: { householdId, memberId, memberName, code, color, label, members, createdByMemberId }
+  householdMemberships: [],
+  activeHouseholdId: null,
 };
 
 /* ---------------- Speicherung (localStorage) ----------------
@@ -798,6 +803,8 @@ function saveState(){
       personalization: state.personalization,
       household: state.household,
       lastSync: state.lastSync,
+      householdMemberships: state.householdMemberships,
+      activeHouseholdId: state.activeHouseholdId,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   }catch(e){
@@ -966,6 +973,28 @@ function loadState(){
       if(!Array.isArray(state.household.members)) state.household.members = [];
     }
     if(Number.isFinite(saved.lastSync)) state.lastSync = saved.lastSync;
+
+    // Mehrere Haushalte (z.B. Zuhause + WG am Studienort): Liste aller Mitgliedschaften
+    // laden. Ältere Speicherstände kennen das noch nicht - dann aus dem einen bereits
+    // vorhandenen state.household eine Mitgliedschaft nachbauen, damit bestehende
+    // Nutzer/innen nahtlos "aufsteigen", ohne ihrem Haushalt erneut beitreten zu müssen.
+    state.householdMemberships = Array.isArray(saved.householdMemberships) ? saved.householdMemberships : [];
+    if(state.household.id && !state.householdMemberships.some(m => m.householdId === state.household.id)){
+      state.householdMemberships.push({
+        householdId: state.household.id, memberId: state.household.memberId,
+        memberName: state.household.memberName, code: state.household.code, color: '',
+        label: '', members: state.household.members, createdByMemberId: state.household.createdByMemberId,
+      });
+    }
+    state.activeHouseholdId = typeof saved.activeHouseholdId === 'string' ? saved.activeHouseholdId : null;
+    if(!state.activeHouseholdId && state.household.id) state.activeHouseholdId = state.household.id;
+
+    // Migration: Artikel, die schon vor dieser Funktion mit einem Haushalt synchronisiert
+    // waren (haben eine dbId), aber noch kein householdId-Etikett tragen - das kann nur
+    // der eine damals einzige Haushalt gewesen sein.
+    if(state.household.id){
+      state.inventory.forEach(item => { if(item.dbId && !item.householdId) item.householdId = state.household.id; });
+    }
     if(saved.theme === 'oliv' || saved.theme === 'blau') state.theme = saved.theme;
     if(Array.isArray(saved.appliances)) state.appliances = saved.appliances.filter(a=>typeof a === 'string');
     if(Array.isArray(saved.customAppliances)) state.customAppliances = saved.customAppliances.filter(a=>typeof a === 'string');
@@ -1427,17 +1456,18 @@ function expiryBadge(item){
 function renderDashboard(){
   // Begrüßung passend zum Zustand: ganz neue Nutzer werden anders begrüßt als
   // Nutzer, die die App schon befüllt haben.
+  const inv = visibleInventory();
   const isNew = !state.inventory.length && !state.favorites.size && !state.customRecipes.length;
   document.getElementById('greetingTitle').textContent = isNew ? 'Willkommen 👋' : 'Willkommen zurück 👋';
   document.getElementById('greetingSub').textContent = isNew
     ? 'Schön, dass du da bist! Mach am besten zuerst ein Foto von deinem Kühlschrank oder Kassenzettel.'
     : 'Hier ist dein Überblick für heute.';
 
-  document.getElementById('statCount').textContent = state.inventory.length;
+  document.getElementById('statCount').textContent = inv.length;
   // Nur Artikel, bei denen die App wirklich etwas über die Haltbarkeit weiß:
   // frische Ware (grobe, aber sinnvolle Schätzung) und selbst eingetragene Daten.
   // Verpacktes ohne Datum bleibt außen vor - sonst warnt die App vor Erfundenem.
-  const expiring = state.inventory.filter(i=>hasDate(i) && daysUntil(i.expiry)<=4)
+  const expiring = inv.filter(i=>hasDate(i) && daysUntil(i.expiry)<=4)
                                   .sort((a,b)=>a.expiry-b.expiry);
   document.getElementById('statExpiring').textContent = expiring.length;
   document.getElementById('statFav').textContent = state.favorites.size;
@@ -1507,7 +1537,7 @@ function trackerRanking(){
   const n = trackerNutrient();
   const rows = [];
   const unknown = [];
-  state.inventory.forEach(item => {
+  visibleInventory().forEach(item => {
     const entry = nutritionFor(item.name);
     if(!entry){ unknown.push(item.name); return; }
     rows.push({ id:item.id, name:item.name, ref:entry.n, value:entry.v[n.idx], entry });
@@ -1537,7 +1567,7 @@ function renderTracker(){
   const { rows, unknown, nutrient } = trackerRanking();
 
   if(!rows.length){
-    card.innerHTML = `<div class="empty">${state.inventory.length
+    card.innerHTML = `<div class="empty">${visibleInventory().length
       ? 'Zu den Artikeln in deinem Bestand liegen mir keine Nährwerte vor.'
       : 'Sobald etwas in deinem Bestand liegt, siehst du hier die Nährwerte.'}</div>`;
     return;
@@ -1651,8 +1681,9 @@ function renderInventory(){
   const catIcon = {Kühlschrank:ICONS.fridge, Vorrat:ICONS.pantry};
   const list = document.getElementById('inventoryList');
   const newCache = {};
+  const inv = visibleInventory();
   list.innerHTML = cats.map(cat=>{
-    const items = state.inventory.filter(i=>i.category===cat);
+    const items = inv.filter(i=>i.category===cat);
     // Artikel ohne Datum ("lange haltbar") sortieren immer ans Ende - oben soll
     // stehen, was wirklich bald verbraucht werden muss.
     const rank = i => i.expiry ? i.expiry.getTime() : Infinity;
@@ -2223,8 +2254,19 @@ function namesMatch(a,b){
   }
   return false;
 }
+// Ein Artikel ist "sichtbar", wenn er entweder rein persönlich ist (keinem Haushalt
+// zugeordnet - z.B. weil er zu einem inzwischen verlassenen Haushalt gehörte) ODER
+// zum gerade AKTIVEN Haushalt gehört. Artikel eines anderen Haushalts, in dem man
+// zwar noch Mitglied ist, der aber gerade nicht aktiv ist (siehe "Haushalt wechseln"),
+// bleiben so lange ausgeblendet, bis man wieder zu diesem Haushalt wechselt.
+function isVisibleItem(item){
+  return !item.householdId || item.householdId === state.household.id;
+}
+function visibleInventory(){
+  return state.inventory.filter(isVisibleItem);
+}
 function findInventoryItem(name){
-  return state.inventory.find(i => namesMatch(i.name, name)) || null;
+  return visibleInventory().find(i => namesMatch(i.name, name)) || null;
 }
 function inventoryHas(name){
   return Boolean(findInventoryItem(name));
@@ -2305,6 +2347,10 @@ function addToInventory(name, category, expiry, exact){
     category: category || 'Kühlschrank',
     expiry: expiry || null,     // null = lange haltbar, die App behauptet nichts
     exact: Boolean(exact),
+    // Direkt dem gerade aktiven Haushalt zuordnen (oder undefined = rein persönlich,
+    // falls gerade keiner aktiv ist) - wichtig, damit der Artikel beim späteren
+    // Wechseln zwischen mehreren Haushalten im richtigen "landet".
+    householdId: state.household.id || undefined,
   };
   state.inventory.push(item);
   // Falls ein Haushalt geteilt wird: den neuen Artikel im Hintergrund hochladen,
@@ -2765,7 +2811,7 @@ async function submitIdea(){
     <div class="spinner"></div>
   `;
 
-  const result = await callFunction('generateRecipe', { idea, inventory: state.inventory.map(i=>i.name), personalization: aiContext() });
+  const result = await callFunction('generateRecipe', { idea, inventory: visibleInventory().map(i=>i.name), personalization: aiContext() });
   if(!result.ok){ showIdeaError(result.message); return; }
   addGeneratedRecipe(result.data.recipe);
 }
@@ -2894,7 +2940,7 @@ async function submitNote(){
 
   const result = await callFunction('interpretNote', {
     text, kind,
-    inventory: state.inventory.map(i=>i.name),
+    inventory: visibleInventory().map(i=>i.name),
     recipeNames: allRecipes().map(r=>r.name),
     personalization: aiContext(),
   });
@@ -3143,7 +3189,10 @@ function dismissHouseholdSetup(){
 
 function householdShowCreateForm(){ householdSheetMode = 'create'; renderHouseholdSheet(); }
 function householdShowJoinForm(){ householdSheetMode = 'join'; renderHouseholdSheet(); }
-function householdShowStart(){ householdSheetMode = 'start'; renderHouseholdSheet(); }
+// "Zurück" führt zur passenden Ausgangsansicht: gibt es schon einen aktiven Haushalt
+// (z.B. weil man einen WEITEREN dazu gründen/beitreten wollte), geht's dahin zurück -
+// sonst zur echten Startansicht ohne Haushalt.
+function householdShowStart(){ householdSheetMode = state.household.id ? 'joined' : 'start'; renderHouseholdSheet(); }
 
 function renderHouseholdSheet(){
   const content = document.getElementById('householdSheetContent');
@@ -3154,6 +3203,9 @@ function renderHouseholdSheet(){
     // Verwalter = die Person, die den Haushalt gegründet hat (households.created_by_member_id).
     // Nur sie darf andere Mitglieder entfernen; jede Person darf selbst gehen.
     const isAdmin = Boolean(h.memberId && h.createdByMemberId && h.memberId === h.createdByMemberId);
+    // Andere Haushalte, in denen man ebenfalls Mitglied ist (z.B. Zuhause + Studienort) -
+    // zum schnellen Wechseln, ohne irgendwo auszutreten.
+    const others = (state.householdMemberships || []).filter(m => m.householdId !== h.id);
     content.innerHTML = `
       <h2>Küche geteilt 🍽️</h2>
       <p class="subtle" style="margin:10px 0 16px;">Ihr seht denselben Bestand und dieselbe Einkaufsliste - automatisch aktuell auf allen Geräten (Abgleich etwa alle 10 Sekunden).</p>
@@ -3182,19 +3234,34 @@ function renderHouseholdSheet(){
           </div>`;
         }).join('')}
       </div>` : ''}
+      ${others.length ? `
+      <div class="section-title">Andere Haushalte</div>
+      <div class="card" style="margin-bottom:16px;">
+        ${others.map(m => `
+          <div class="expiry-item">
+            <div class="info" style="flex:1">
+              <strong style="font-size:13.5px;">${escapeHtml(m.label || ('Haushalt ' + m.code))}</strong>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Code ${escapeHtml(m.code)}</div>
+            </div>
+            <button class="btn btn-outline" style="padding:6px 12px;font-size:12.5px;flex:none;" onclick="switchHousehold('${m.householdId}')" ${householdBusy?'disabled':''}>Wechseln</button>
+          </div>`).join('')}
+      </div>` : ''}
+      <button class="btn btn-outline" style="margin-bottom:8px;" onclick="householdShowCreateForm()">Weiteren Haushalt gründen</button>
+      <button class="btn btn-outline" style="margin-bottom:8px;" onclick="householdShowJoinForm()">Mit weiterem Code beitreten</button>
       <button class="btn btn-outline" style="margin-bottom:8px;" onclick="closeSheet('householdOverlay')">Schließen</button>
-      <button class="btn btn-outline" style="color:#a04a4a;border-color:#a04a4a;" onclick="confirmLeaveHousehold()">Haushalt verlassen</button>
+      <button class="btn btn-outline" style="color:#a04a4a;border-color:#a04a4a;" onclick="confirmLeaveHousehold()">Diesen Haushalt verlassen</button>
     `;
     return;
   }
 
   if(householdSheetMode === 'confirmLeave'){
     const isLastMember = h.members.length <= 1;
+    const otherCount = (state.householdMemberships || []).filter(m => m.householdId !== h.id).length;
     content.innerHTML = `
       <h2>Haushalt verlassen?</h2>
       <p class="subtle" style="margin:10px 0 18px;">${isLastMember
         ? 'Du bist die einzige Person im Haushalt - beim Verlassen wird der Haushalt komplett aufgelöst. Dein Bestand bleibt lokal auf diesem Gerät erhalten.'
-        : 'Du siehst den gemeinsamen Bestand danach nicht mehr. Was schon auf diesem Gerät steht, bleibt lokal erhalten.'}</p>
+        : 'Du siehst den gemeinsamen Bestand danach nicht mehr. Was schon auf diesem Gerät steht, bleibt lokal erhalten.'}${otherCount ? ' Deine anderen Haushalte bleiben davon unberührt.' : ''}</p>
       <button class="btn btn-primary" style="margin-bottom:8px;background:#a04a4a;" onclick="leaveHousehold()" ${householdBusy?'disabled':''}>${householdBusy?'Einen Moment …':'Ja, verlassen'}</button>
       <button class="btn btn-outline" onclick="householdSheetMode='joined'; renderHouseholdSheet();">Abbrechen</button>
     `;
@@ -3213,10 +3280,13 @@ function renderHouseholdSheet(){
   }
 
   if(householdSheetMode === 'create'){
+    const already = (state.householdMemberships || []).length > 0;
     content.innerHTML = `
-      <h2>Haushalt gründen</h2>
+      <h2>${already ? 'Weiteren Haushalt gründen' : 'Haushalt gründen'}</h2>
       <p class="subtle" style="margin:10px 0 16px;">Wie heißt du? Damit andere sehen, wer was hinzugefügt hat.</p>
       <input id="hhNameInput" type="text" maxlength="30" placeholder="Dein Name"
+             style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;background:var(--bg);margin-bottom:10px;" />
+      <input id="hhLabelInput" type="text" maxlength="30" placeholder="Bezeichnung (optional, z. B. „Zuhause“)"
              style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;background:var(--bg);margin-bottom:14px;" />
       <button class="btn btn-primary" style="margin-bottom:8px;" onclick="submitCreateHousehold()" ${householdBusy?'disabled':''}>${householdBusy?'Einen Moment …':'Haushalt gründen'}</button>
       <button class="btn btn-outline" onclick="householdShowStart()">Zurück</button>
@@ -3227,12 +3297,15 @@ function renderHouseholdSheet(){
   }
 
   if(householdSheetMode === 'join'){
+    const already = (state.householdMemberships || []).length > 0;
     content.innerHTML = `
-      <h2>Mit Code beitreten</h2>
+      <h2>${already ? 'Mit weiterem Code beitreten' : 'Mit Code beitreten'}</h2>
       <p class="subtle" style="margin:10px 0 16px;">Code von Familie/Freunden eingeben und deinen Namen.</p>
       <input id="hhCodeInput" type="text" maxlength="40" placeholder="Haushalts-Code"
              style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;background:var(--bg);margin-bottom:10px;text-transform:uppercase;" />
       <input id="hhNameInput2" type="text" maxlength="30" placeholder="Dein Name"
+             style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;background:var(--bg);margin-bottom:10px;" />
+      <input id="hhLabelInput2" type="text" maxlength="30" placeholder="Bezeichnung (optional, z. B. „Studium“)"
              style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:14px;font-family:inherit;background:var(--bg);margin-bottom:14px;" />
       <button class="btn btn-primary" style="margin-bottom:8px;" onclick="submitJoinHousehold()" ${householdBusy?'disabled':''}>${householdBusy?'Einen Moment …':'Beitreten'}</button>
       <button class="btn btn-outline" onclick="householdShowStart()">Zurück</button>
@@ -3259,7 +3332,9 @@ function pickMemberColor(){
 
 async function submitCreateHousehold(){
   const nameEl = document.getElementById('hhNameInput');
+  const labelEl = document.getElementById('hhLabelInput');
   const name = nameEl ? nameEl.value.trim() : '';
+  const label = labelEl ? labelEl.value.trim() : '';
   if(!name){ toast('Bitte deinen Namen eingeben'); return; }
   if(householdBusy) return;
   householdBusy = true; renderHouseholdSheet();
@@ -3270,11 +3345,9 @@ async function submitCreateHousehold(){
     });
     if(!res.ok) throw new Error('status ' + res.status);
     const data = await res.json();
-    applyHouseholdJoined(data);
     // Die gründende Person ist immer selbst der/die Verwalter/in - das steht schon
     // fest, ohne auf den ersten Sync warten zu müssen.
-    state.household.createdByMemberId = data.memberId;
-    saveState();
+    applyHouseholdJoined(data, { isCreator: true, label });
     toast(`Haushalt gegründet: ${data.code}`);
   }catch(err){
     console.warn('Haushalt gründen fehlgeschlagen:', err);
@@ -3287,8 +3360,10 @@ async function submitCreateHousehold(){
 async function submitJoinHousehold(){
   const codeEl = document.getElementById('hhCodeInput');
   const nameEl = document.getElementById('hhNameInput2');
+  const labelEl = document.getElementById('hhLabelInput2');
   const code = codeEl ? codeEl.value.trim() : '';
   const name = nameEl ? nameEl.value.trim() : '';
+  const label = labelEl ? labelEl.value.trim() : '';
   if(!code || !name){ toast('Bitte Code und Namen eingeben'); return; }
   if(householdBusy) return;
   householdBusy = true; renderHouseholdSheet();
@@ -3301,7 +3376,7 @@ async function submitJoinHousehold(){
     if(res.status === 409){ toast('Diesen Namen gibt es in diesem Haushalt schon'); return; }
     if(!res.ok) throw new Error('status ' + res.status);
     const data = await res.json();
-    applyHouseholdJoined(data);
+    applyHouseholdJoined(data, { label });
     toast(`Willkommen im Haushalt ${data.code}!`);
   }catch(err){
     console.warn('Haushalt beitreten fehlgeschlagen:', err);
@@ -3311,12 +3386,45 @@ async function submitJoinHousehold(){
   }
 }
 
-function applyHouseholdJoined(data){
-  state.household.id = data.householdId;
-  state.household.memberId = data.memberId;
-  state.household.memberName = data.name;
-  state.household.code = data.code;
-  state.household.asked = true;
+// Trägt eine Mitgliedschaft neu ein oder frischt eine bestehende auf (z.B. wenn der
+// nächste Sync neue Mitglieder oder einen neuen Verwalter meldet) - OHNE dabei
+// bereits gesetzte Felder wie "label" zu verlieren, die im Update-Aufruf gar nicht
+// mitgeschickt werden.
+function upsertMembership(entry){
+  if(!Array.isArray(state.householdMemberships)) state.householdMemberships = [];
+  const idx = state.householdMemberships.findIndex(m => m.householdId === entry.householdId);
+  if(idx === -1) state.householdMemberships.push(entry);
+  else state.householdMemberships[idx] = { ...state.householdMemberships[idx], ...entry };
+}
+
+// Speichert Mitglieder/Verwalter-Status des GERADE AKTIVEN Haushalts auch in dessen
+// Mitgliedschafts-Eintrag - sonst wären diese Infos nach einem Wechsel zu einem
+// anderen Haushalt und zurück wieder veraltet, bis der nächste Sync durchläuft.
+function cacheActiveMembership(){
+  if(!state.household.id) return;
+  upsertMembership({
+    householdId: state.household.id, memberId: state.household.memberId,
+    memberName: state.household.memberName, code: state.household.code,
+    members: state.household.members, createdByMemberId: state.household.createdByMemberId,
+  });
+}
+
+// Nach Gründen ODER Beitreten: macht den neuen Haushalt zum aktiven und merkt sich
+// die Mitgliedschaft dauerhaft in state.householdMemberships, damit man später
+// jederzeit (z.B. über "Haushalt wechseln") wieder dorthin kann, auch wenn
+// inzwischen ein anderer Haushalt aktiv ist.
+function applyHouseholdJoined(data, opts){
+  opts = opts || {};
+  state.household = {
+    asked: true, id: data.householdId, memberId: data.memberId, memberName: data.name,
+    code: data.code, members: [], createdByMemberId: opts.isCreator ? data.memberId : null,
+  };
+  state.activeHouseholdId = data.householdId;
+  upsertMembership({
+    householdId: data.householdId, memberId: data.memberId, memberName: data.name,
+    code: data.code, color: data.color, label: (opts.label || '').trim(),
+    members: [], createdByMemberId: opts.isCreator ? data.memberId : null,
+  });
   state.lastSync = 0;   // beim ersten Sync danach alles vom Server holen
   saveState();
   householdSheetMode = 'joined';
@@ -3329,9 +3437,40 @@ function applyHouseholdJoined(data){
   syncFromDatabase();
 }
 
+// Wechselt, welcher (bereits beigetretene) Haushalt gerade "aktiv" ist - z.B. beim
+// Wechsel zwischen Zuhause und dem Haushalt am Studienort. Der Bestand jedes
+// Haushalts bleibt dabei komplett getrennt (siehe isVisibleItem/visibleInventory);
+// rein persönliche, keinem Haushalt zugeordnete Artikel bleiben immer sichtbar.
+function switchHousehold(householdId){
+  if(householdBusy) return;
+  const m = (state.householdMemberships || []).find(x => x.householdId === householdId);
+  if(!m){ toast('Haushalt nicht gefunden'); return; }
+  if(m.householdId === state.household.id) return;   // schon aktiv
+  state.household = {
+    asked: true, id: m.householdId, memberId: m.memberId, memberName: m.memberName,
+    code: m.code, members: m.members || [], createdByMemberId: m.createdByMemberId || null,
+  };
+  state.activeHouseholdId = m.householdId;
+  state.lastSync = 0;   // frisch abgleichen, sobald dieser Haushalt aktiv ist
+  saveState();
+  householdSheetMode = 'joined';
+  renderHouseholdSheet();
+  renderAll();
+  startHouseholdSync();   // läuft meist schon - dann ein No-Op
+  syncFromDatabase();
+  toast(`Gewechselt zu ${escapeHtml(m.label || ('Haushalt ' + m.code))}`);
+}
+
+// Nur rein persönliche (noch keinem Haushalt zugeordnete) Artikel werden nachgereicht -
+// Artikel, die bereits zu einem ANDEREN Haushalt gehören (z.B. weil gerade zwischen
+// zwei Haushalten gewechselt wurde), dürfen nicht versehentlich in diesen hier
+// mit-hochgeladen werden.
 function uploadExistingInventoryToHousehold(){
   if(!state.household.id || !state.household.memberId) return;
-  state.inventory.filter(item => !item.dbId).forEach(item => syncNewItemToBackend(item));
+  state.inventory.filter(item => !item.dbId && !item.householdId).forEach(item => {
+    item.householdId = state.household.id;
+    syncNewItemToBackend(item);
+  });
 }
 
 // Lädt einen frisch lokal hinzugefügten Artikel im Hintergrund hoch. Läuft NIE
@@ -3366,7 +3505,15 @@ function mergeInventory(serverItems){
   if(!Array.isArray(serverItems)) return;
   serverItems.forEach(s => {
     let local = state.inventory.find(i => i.dbId === s.id);
-    if(!local) local = state.inventory.find(i => !i.dbId && namesMatch(i.name, s.name));
+    // Namens-Fallback (noch nicht hochgeladener lokaler Artikel) NUR unter Artikeln,
+    // die entweder noch keinem Haushalt zugeordnet sind ODER schon (optimistisch, vor
+    // Abschluss des Uploads) dem GERADE AKTIVEN Haushalt zugeordnet wurden - sonst
+    // könnte ein Artikel aus einem ANDEREN, gerade inaktiven Haushalt fälschlich
+    // hierher "geklaut" werden, nur weil der Name zufällig passt. Die zweite
+    // Bedingung ist wichtig, weil uploadExistingInventoryToHousehold() householdId
+    // sofort synchron setzt, während dbId erst nach der Server-Antwort ankommt -
+    // ohne sie würde ein knapper Sync-Wettlauf sonst Duplikate erzeugen.
+    if(!local) local = state.inventory.find(i => !i.dbId && (i.householdId === state.household.id || !i.householdId) && namesMatch(i.name, s.name));
     let expiry = s.expiry ? new Date(s.expiry) : null;
     // Genau wie beim Laden aus localStorage: ein technisch kaputtes Datum (z.B. aus
     // einer älteren, fehlerhaften Version) nie als "seit Jahren abgelaufen" übernehmen.
@@ -3379,6 +3526,7 @@ function mergeInventory(serverItems){
       local.expiry = (expiry && !isNaN(expiry.getTime())) ? expiry : null;
       local.exact = exact;
       local.addedByMemberId = s.added_by_member_id;
+      local.householdId = state.household.id;
     } else {
       state.inventory.push({
         id: ++idCounter,
@@ -3388,6 +3536,7 @@ function mergeInventory(serverItems){
         expiry: (expiry && !isNaN(expiry.getTime())) ? expiry : null,
         exact: exact,
         addedByMemberId: s.added_by_member_id,
+        householdId: state.household.id,
       });
     }
   });
@@ -3418,6 +3567,7 @@ async function syncFromDatabase(){
       }
     }
     if(data.createdByMemberId) state.household.createdByMemberId = data.createdByMemberId;
+    cacheActiveMembership();
     state.lastSync = data.timestamp || Date.now();
     saveState();
     renderAll();
@@ -3427,19 +3577,50 @@ async function syncFromDatabase(){
   }
 }
 
-// Trennt dieses Gerät lokal vom Haushalt - genutzt, wenn der Sync merkt, dass man
-// selbst nicht mehr Mitglied ist (entfernt worden, oder Haushalt existiert nicht
-// mehr). Der eigene Bestand bleibt erhalten, nur als rein lokale Artikel.
-function handleRemovedFromHousehold(){
-  if(householdSyncTimer){ clearInterval(householdSyncTimer); householdSyncTimer = null; }
-  state.inventory.forEach(item => { delete item.dbId; delete item.addedByMemberId; });
-  state.household = { asked: true, id: null, memberId: null, memberName: '', code: '', members: [], createdByMemberId: null };
-  state.lastSync = 0;
-  saveState();
-  householdSheetMode = 'start';
-  closeSheet('householdOverlay');
-  toast('Du bist nicht mehr in diesem Haushalt - dein Bestand bleibt lokal erhalten');
+// Kappt die Verbindung zu GENAU EINEM Haushalt lokal (nach Verlassen oder Rauswurf) -
+// dessen Artikel werden zu rein persönlichen Artikeln (bleiben erhalten und sind
+// danach immer sichtbar, egal welcher Haushalt gerade aktiv ist). Andere Haushalte,
+// in denen man noch Mitglied ist, bleiben davon komplett unberührt. Gibt es noch
+// mindestens einen weiteren, wird automatisch zu diesem gewechselt - sonst geht's
+// zurück in den reinen Lokal-Modus.
+function detachHouseholdLocally(householdId){
+  state.inventory.forEach(item => {
+    if(item.householdId === householdId){ delete item.dbId; delete item.addedByMemberId; delete item.householdId; }
+  });
+  state.householdMemberships = (state.householdMemberships || []).filter(m => m.householdId !== householdId);
+
+  const remaining = state.householdMemberships;
+  if(remaining.length){
+    const next = remaining[0];
+    state.household = {
+      asked: true, id: next.householdId, memberId: next.memberId, memberName: next.memberName,
+      code: next.code, members: next.members || [], createdByMemberId: next.createdByMemberId || null,
+    };
+    state.activeHouseholdId = next.householdId;
+    state.lastSync = 0;
+    saveState();
+    householdSheetMode = 'joined';
+    renderHouseholdSheet();
+    syncFromDatabase();
+  } else {
+    if(householdSyncTimer){ clearInterval(householdSyncTimer); householdSyncTimer = null; }
+    state.household = { asked: true, id: null, memberId: null, memberName: '', code: '', members: [], createdByMemberId: null };
+    state.activeHouseholdId = null;
+    state.lastSync = 0;
+    saveState();
+    householdSheetMode = 'start';
+    closeSheet('householdOverlay');
+    renderHouseholdSheet();
+  }
   renderAll();
+}
+
+// Genutzt, wenn der Sync merkt, dass man selbst nicht mehr Mitglied des GERADE
+// AKTIVEN Haushalts ist (entfernt worden, oder der Haushalt existiert nicht mehr).
+function handleRemovedFromHousehold(){
+  const leavingId = state.household.id;
+  toast('Du bist nicht mehr in diesem Haushalt - dein Bestand bleibt lokal erhalten');
+  detachHouseholdLocally(leavingId);
 }
 
 function startHouseholdSync(){
@@ -3465,23 +3646,17 @@ function confirmRemoveMember(memberId){
 async function leaveHousehold(){
   if(householdBusy) return;
   householdBusy = true; renderHouseholdSheet();
+  const leavingId = state.household.id;
   try{
     const res = await fetch('/api/household/leave', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ householdId: state.household.id, memberId: state.household.memberId }),
+      body: JSON.stringify({ householdId: leavingId, memberId: state.household.memberId }),
     });
     if(!res.ok) throw new Error('status ' + res.status);
-    if(householdSyncTimer){ clearInterval(householdSyncTimer); householdSyncTimer = null; }
-    // Bestand bleibt lokal erhalten - nur die Verknüpfung zum Haushalt wird gekappt,
-    // damit nichts mehr hoch- oder heruntergeladen wird.
-    state.inventory.forEach(item => { delete item.dbId; delete item.addedByMemberId; });
-    state.household = { asked: true, id: null, memberId: null, memberName: '', code: '', members: [], createdByMemberId: null };
-    state.lastSync = 0;
-    saveState();
-    householdSheetMode = 'start';
-    closeSheet('householdOverlay');
+    // Bestand bleibt lokal erhalten - nur die Verknüpfung zu DIESEM Haushalt wird
+    // gekappt; andere Haushalte, in denen man noch Mitglied ist, bleiben unberührt.
+    detachHouseholdLocally(leavingId);
     toast('Haushalt verlassen - dein Bestand bleibt lokal erhalten');
-    renderAll();
   }catch(err){
     console.warn('Haushalt verlassen fehlgeschlagen:', err);
     toast('Konnte den Haushalt nicht verlassen - bitte Internetverbindung prüfen');
@@ -3794,10 +3969,10 @@ function openSettingsSheet(opts){
     <div class="card" style="margin-bottom:10px;">
       <div class="expiry-item" style="border-bottom:none;padding:4px 0;">
         <div class="info" style="flex:1">
-          <strong style="font-size:13.5px;">${state.household.id ? escapeHtml(state.household.code) : 'Noch kein Haushalt'}</strong>
+          <strong style="font-size:13.5px;">${state.household.id ? escapeHtml((state.householdMemberships||[]).find(m=>m.householdId===state.household.id)?.label || state.household.code) : 'Noch kein Haushalt'}</strong>
           <div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">
             ${state.household.id
-              ? `${state.household.members.length || 1} Mitglied${(state.household.members.length||1)===1?'':'er'} - Bestand wird automatisch geteilt`
+              ? `${state.household.members.length || 1} Mitglied${(state.household.members.length||1)===1?'':'er'} - Bestand wird automatisch geteilt${(state.householdMemberships||[]).length > 1 ? ` · aktiv von ${state.householdMemberships.length} Haushalten` : ''}`
               : 'App läuft bisher nur lokal auf diesem Gerät.'}
           </div>
         </div>
