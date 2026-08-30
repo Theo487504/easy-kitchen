@@ -76,6 +76,12 @@
     background:var(--body-bg);
     color:var(--text);
     -webkit-font-smoothing:antialiased;
+    /* Verhindert das Doppeltipp-Reinzoomen, das sich in einer "richtigen" App falsch
+       anfühlt (Browser-Standardverhalten bei schnellem Doppeltippen). Pinch-to-zoom
+       (Barrierefreiheit) bleibt dabei erhalten - nur die Doppeltipp-Geste wird
+       abgeschaltet. Einzelne Elemente mit eigenem touch-action (z.B. beim Wischen
+       oder Ziehen) überschreiben das für sich weiterhin normal. */
+    touch-action:manipulation;
   }
   .app-shell{
     max-width:640px;
@@ -234,6 +240,13 @@
     display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);
     border-radius:var(--radius-md);padding:11px 13px;margin-bottom:8px;
   }
+  /* Kurzes Aufleuchten, wenn man von "läuft bald ab" auf der Startseite direkt zu
+     einem Artikel im Bestand springt - macht sichtbar, welcher Artikel gemeint war. */
+  @keyframes rowFlash{
+    0%{ background:var(--warning-bg,#fef3c7); border-color:var(--warning,#d97706); }
+    100%{ background:var(--surface); border-color:var(--border); }
+  }
+  .item-row.flash-highlight{ animation:rowFlash 1.6s ease-out; }
   .item-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
   .item-row .info{flex:1;min-width:0;}
   .item-row .info strong{display:block;font-size:14px;}
@@ -686,7 +699,7 @@
 <script>
 /* Wird bei jeder Auslieferung hochgezählt - so lässt sich in den Einstellungen
    sofort sehen, ob die neueste Version wirklich geladen wurde. */
-const APP_VERSION = '2026.08.23-1';
+const APP_VERSION = '2026.08.23-2';
 
 /* ---------------- Icons ---------------- */
 const ICONS = {
@@ -1019,6 +1032,11 @@ const RECIPE_POOL = [
     id:'r-feta-nudeln', name:'Ofen-Feta-Nudeln', tags:['Vegetarisch'], time:30, kcal:520, protein:20, portions:2,
     summary:'Feta und Tomaten wandern zusammen in den Ofen, werden zerdrückt und ergeben ganz von selbst eine cremige Sauce für die Nudeln.',
     needs:['Nudeln','Feta','Tomaten','Knoblauch'], missing:[],
+    // allIngredients: WIRKLICH alle Zutaten (ohne Wasser, ohne "wenn da"-Extras) -
+    // wird in der Zutaten-Übersicht beim Öffnen des Rezepts gezeigt. needs/missing
+    // bleiben bewusst die kleinere, fürs Bestand-Matching & die Einkaufsliste
+    // relevante Auswahl (siehe Kommentar oben bei RECIPE_POOL).
+    allIngredients:['Nudeln','Feta','Tomaten','Knoblauch','Olivenöl','Salz','Pfeffer'],
     ingredients:['250 g Nudeln','200 g Feta (ein Block)','400 g kleine Tomaten','2 Zehen Knoblauch','3 EL Olivenöl','Salz & Pfeffer','frisches Basilikum, wenn da'],
     steps:[
       'Den Ofen auf 200 °C Ober-/Unterhitze vorheizen.',
@@ -1035,6 +1053,7 @@ const RECIPE_POOL = [
     id:'r-shakshuka', name:'Shakshuka', tags:['Vegetarisch','Proteinreich','Schnell'], time:25, kcal:380, protein:21, portions:2,
     summary:'Eier ziehen in einer würzigen Tomaten-Paprika-Sauce gar – ein Pfannengericht, das zu jeder Tageszeit passt.',
     needs:['Eier','Tomaten (Dose)','Paprika','Zwiebeln'], missing:[],
+    allIngredients:['Eier','Tomaten (Dose)','Paprika','Zwiebeln','Knoblauch','Paprikapulver','Kreuzkümmel','Olivenöl','Salz','Pfeffer','Brot'],
     ingredients:['4 Eier','1 Dose stückige Tomaten (400 g)','1 rote Paprika','1 Zwiebel','2 Zehen Knoblauch','1 TL Paprikapulver edelsüß','½ TL Kreuzkümmel','2 EL Olivenöl','Salz & Pfeffer','Brot zum Dippen'],
     steps:[
       'Die Zwiebel in feine Streifen schneiden, die Paprika entkernen und ebenfalls in Streifen schneiden.',
@@ -1051,6 +1070,7 @@ const RECIPE_POOL = [
     id:'r-champignon-nudeln', name:'Cremige Champignon-Nudeln', tags:['Vegetarisch','Schnell'], time:20, kcal:540, protein:18, portions:2,
     summary:'Champignons scharf anbraten, mit Sahne ablöschen, Nudeln unterheben – in zwanzig Minuten fertig und immer ein Treffer.',
     needs:['Nudeln','Champignons','Sahne','Zwiebeln'], missing:[],
+    allIngredients:['Nudeln','Champignons','Sahne','Zwiebeln','Knoblauch','Öl','Käse','Salz','Pfeffer','Muskat'],
     ingredients:['250 g Nudeln','300 g Champignons','150 ml Sahne','1 Zwiebel','2 Zehen Knoblauch','2 EL Öl','50 g geriebener Käse','Salz, Pfeffer & Muskat','Petersilie, wenn da'],
     steps:[
       'Die Nudeln in gesalzenem Wasser nach Packungsanleitung garen. Eine Tasse Nudelwasser aufheben.',
@@ -1067,6 +1087,7 @@ const RECIPE_POOL = [
     id:'r-haehnchenpfanne', name:'Hähnchen-Gemüse-Pfanne mit Reis', tags:['Proteinreich'], time:30, kcal:480, protein:34, portions:2,
     summary:'Hähnchen goldbraun braten, buntes Gemüse dazu, mit Sojasauce und Honig glasieren – eine Pfanne, ein Teller, alles drin.',
     needs:['Hähnchenbrust','Reis','Paprika','Zwiebeln','Karotten'], missing:['Sojasauce'],
+    allIngredients:['Hähnchenbrust','Reis','Paprika','Zwiebeln','Karotten','Sojasauce','Honig','Ingwer','Öl','Pfeffer'],
     ingredients:['300 g Hähnchenbrust','150 g Reis','1 Paprika','1 Zwiebel','2 Karotten','3 EL Sojasauce','1 TL Honig','1 Stück Ingwer (daumengroß)','2 EL Öl','Pfeffer'],
     steps:[
       'Den Reis in gesalzenem Wasser nach Packungsanleitung garen und zugedeckt ziehen lassen.',
@@ -1083,6 +1104,7 @@ const RECIPE_POOL = [
     id:'r-lachs-blech', name:'Lachs vom Blech mit Kartoffeln', tags:['Proteinreich'], time:35, kcal:560, protein:38, portions:2,
     summary:'Kartoffeln vorbacken, Lachs und Zitrone dazulegen, fertig backen – ein Blech, kaum Arbeit, sieht aus wie im Restaurant.',
     needs:['Lachs','Kartoffeln','Zitrone','Brokkoli'], missing:[],
+    allIngredients:['Lachs','Kartoffeln','Zitrone','Brokkoli','Olivenöl','Salz','Pfeffer','Thymian oder Dill'],
     ingredients:['2 Lachsfilets (je ca. 150 g)','600 g Kartoffeln','1 Zitrone','300 g Brokkoli','3 EL Olivenöl','Salz & Pfeffer','getrockneter Thymian oder Dill'],
     steps:[
       'Den Ofen auf 200 °C Ober-/Unterhitze vorheizen.',
@@ -1099,6 +1121,7 @@ const RECIPE_POOL = [
     id:'r-dal', name:'Rote-Linsen-Dal mit Kokosmilch', tags:['Vegan','Proteinreich','Schnell'], time:25, kcal:430, protein:20, portions:2,
     summary:'Linsen köcheln in Kokosmilch weich und binden die Sauce ganz von selbst – ein Topf, kein Rühren nötig, sättigt richtig.',
     needs:['Rote Linsen','Zwiebeln','Knoblauch'], missing:['Kokosmilch'],
+    allIngredients:['Rote Linsen','Kokosmilch','Zwiebeln','Knoblauch','Ingwer','Currypulver','Öl','Salz','Zitrone'],
     ingredients:['180 g rote Linsen','400 ml Kokosmilch','300 ml Wasser','1 Zwiebel','2 Zehen Knoblauch','1 Stück Ingwer (daumengroß)','2 TL Currypulver','1 EL Öl','Salz','½ Zitrone'],
     steps:[
       'Die Zwiebel fein würfeln und im Öl bei mittlerer Hitze 4 Minuten glasig anschwitzen.',
@@ -1115,6 +1138,7 @@ const RECIPE_POOL = [
     id:'r-gebratener-reis', name:'Gebratener Reis mit Ei', tags:['Vegetarisch','Schnell'], time:15, kcal:450, protein:17, portions:2,
     summary:'Der beste Weg, Reste zu verwerten: kalter Reis, Ei und was das Gemüsefach hergibt, scharf angebraten.',
     needs:['Reis','Eier','Erbsen','Karotten','Zwiebeln'], missing:['Sojasauce'],
+    allIngredients:['Reis','Eier','Erbsen','Karotten','Zwiebeln','Sojasauce','Öl','Pfeffer'],
     ingredients:['400 g gekochter Reis vom Vortag','3 Eier','150 g Erbsen (TK)','2 Karotten','1 Zwiebel','3 EL Sojasauce','2 EL Öl','1 TL Sesamöl, wenn da','Pfeffer','Frühlingszwiebeln, wenn da'],
     steps:[
       'Am besten funktioniert kalter Reis vom Vortag: Er ist trockener und die Körner kleben nicht. Frisch gekochter Reis wird beim Braten leicht matschig.',
@@ -1131,6 +1155,7 @@ const RECIPE_POOL = [
     id:'r-ofengemuese', name:'Ofengemüse mit Kichererbsen', tags:['Vegan','Proteinreich'], time:35, kcal:410, protein:18, portions:2,
     summary:'Alles auf ein Blech, in den Ofen, fertig. Die Kichererbsen werden dabei knusprig und machen richtig satt.',
     needs:['Kichererbsen (Dose)','Kartoffeln','Paprika','Zwiebeln','Zucchini'], missing:[],
+    allIngredients:['Kichererbsen (Dose)','Kartoffeln','Paprika','Zwiebeln','Zucchini','Olivenöl','Paprikapulver','Oregano','Salz','Pfeffer'],
     ingredients:['1 Dose Kichererbsen (400 g)','400 g Kartoffeln','1 Paprika','1 Zucchini','1 rote Zwiebel','3 EL Olivenöl','2 TL Paprikapulver','1 TL Oregano','Salz & Pfeffer'],
     steps:[
       'Den Ofen auf 210 °C Ober-/Unterhitze vorheizen.',
@@ -1147,6 +1172,7 @@ const RECIPE_POOL = [
     id:'r-kartoffelsuppe', name:'Kartoffel-Lauch-Suppe', tags:['Vegan'], time:30, kcal:320, protein:9, portions:2,
     summary:'Wenige Zutaten, viel Wärme: Kartoffeln und Lauch in Brühe weich kochen und cremig pürieren.',
     needs:['Kartoffeln','Lauch','Zwiebeln'], missing:['Gemüsebrühe'],
+    allIngredients:['Kartoffeln','Lauch','Zwiebeln','Gemüsebrühe','Öl','Salz','Pfeffer','Muskat','Essig oder Zitronensaft'],
     ingredients:['600 g Kartoffeln (mehligkochend)','1 Stange Lauch','1 Zwiebel','800 ml Gemüsebrühe','1 EL Öl','Salz, Pfeffer & Muskat','1 TL Essig oder Zitronensaft'],
     steps:[
       'Den Lauch längs aufschneiden und unter fließendem Wasser gut auswaschen – zwischen den Schichten sitzt oft Erde. Dann in Ringe schneiden.',
@@ -1163,6 +1189,7 @@ const RECIPE_POOL = [
     id:'r-hackpfanne', name:'Schnelle Hackpfanne mit Paprika', tags:['Proteinreich','Schnell'], time:25, kcal:490, protein:31, portions:2,
     summary:'Hackfleisch krümelig braten, Paprika und Tomaten dazu, kräftig würzen – sättigend und in einer Pfanne erledigt.',
     needs:['Hackfleisch','Paprika','Zwiebeln','Tomaten (Dose)'], missing:[],
+    allIngredients:['Hackfleisch','Paprika','Zwiebeln','Tomaten (Dose)','Knoblauch','Tomatenmark','Paprikapulver','Öl','Salz','Pfeffer'],
     ingredients:['400 g Hackfleisch','2 Paprika','1 Zwiebel','1 Dose stückige Tomaten (400 g)','2 Zehen Knoblauch','1 EL Tomatenmark','1 TL Paprikapulver','1 EL Öl','Salz & Pfeffer'],
     steps:[
       'Die Pfanne mit dem Öl richtig heiß werden lassen, bevor das Hack hineinkommt.',
@@ -1219,6 +1246,23 @@ function switchView(view){
   renderNav();
   renderAll();
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// Von "Läuft bald ab" auf der Startseite: direkt zu diesem Artikel im Bestand
+// springen (statt dass ein Klick dort einfach nichts tut) - kurzes Aufleuchten
+// zeigt, welcher Artikel gemeint war, damit man ihn gleich als verbraucht
+// markieren oder nachkaufen kann.
+function goToInventoryItem(id){
+  switchView('bestand');
+  setTimeout(() => {
+    const row = document.querySelector(`[data-item-row="${id}"]`);
+    if(!row) return;
+    row.scrollIntoView({behavior:'smooth', block:'center'});
+    row.classList.remove('flash-highlight');
+    void row.offsetWidth;   // Reflow erzwingen, damit die Animation bei erneutem Klick neu startet
+    row.classList.add('flash-highlight');
+    setTimeout(() => row.classList.remove('flash-highlight'), 1700);
+  }, 150);
 }
 
 /* ---------------- Toast ---------------- */
@@ -1495,8 +1539,10 @@ function renderDashboard(){
   }
 
   const expCard = document.getElementById('expiringCard');
+  // Antippbar: springt direkt zu diesem Artikel im Bestand, statt dass hier nichts
+  // passiert - von da kann man ihn z.B. gleich als verbraucht markieren.
   expCard.innerHTML = expiring.length ? expiring.map(i=>`
-    <div class="expiry-item">
+    <div class="expiry-item" style="cursor:pointer;" onclick="goToInventoryItem(${i.id})">
       <div class="info" style="flex:1"><strong>${i.name}</strong><div style="font-size:12px;color:var(--text-muted)">${i.category}</div></div>
       ${expiryBadge(i)}
     </div>`).join('') : `<div class="empty">Aktuell läuft nichts Kritisches ab 🎉</div>`;
@@ -1717,7 +1763,7 @@ function renderInventory(){
             ? `<input type="date" value="${toISODate(i.expiry || todayOffset(7))}" data-expiry-input="${i.id}" onchange="saveExpiry(${i.id}, this.value)" onblur="cancelEditExpiry(${i.id})" autofocus style="font-size:12.5px;padding:2px 6px;border:1px solid var(--border);border-radius:6px;font-family:inherit;"/>`
             : `<span onclick="editExpiry(${i.id})" style="cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;">${subLabel}</span>`;
           return swipeWrap(`
-          <div class="item-row">
+          <div class="item-row" data-item-row="${i.id}">
             <span class="item-dot" style="background:${f.color}"></span>
             <div class="info"><strong>${i.name}</strong>${expiryField}</div>
             ${expiryBadge(i)}
@@ -2599,8 +2645,13 @@ function unhideAllRecipes(){
 function openRecipe(id){
   const r = allRecipes().find(x=>x.id===id);
   if(!r) return;
-  const have = r.needs.filter(n=>inventoryHas(n));
-  const missingAll = [...r.needs.filter(n=>!inventoryHas(n)), ...r.missing];
+  // Die Zutaten-Übersicht zeigt WIRKLICH ALLE Zutaten (allIngredients, falls
+  // vorhanden), nicht nur die für Bestand-Abgleich/Einkaufsliste relevante engere
+  // Auswahl (needs+missing) - sonst wirkt das Rezept unvollständig, wenn man es
+  // öffnet, und erst die "Rezeptkarte" verrät den Rest.
+  const allNames = (r.allIngredients && r.allIngredients.length) ? r.allIngredients : [...r.needs, ...r.missing];
+  const have = allNames.filter(n=>inventoryHas(n));
+  const missingAll = allNames.filter(n=>!inventoryHas(n));
   const isFav = state.favorites.has(r.id);
   const content = document.getElementById('recipeSheetContent');
   content.innerHTML = `
